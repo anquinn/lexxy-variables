@@ -1,0 +1,30 @@
+{
+  "name": "lexxy-variables",
+  "version": "0.0.1",
+  "description": "Insert and safely resolve variables in Lexxy rich text, stored as Action Text attachment chips.",
+  "type": "module",
+  "homepage": "https://github.com/anquinn/lexxy-variables",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anquinn/lexxy-variables.git"
+  },
+  "bugs": "https://github.com/anquinn/lexxy-variables/issues",
+  "main": "src/lexxy/variable_extension.js",
+  "module": "src/lexxy/variable_extension.js",
+  "exports": {
+    ".": "./src/lexxy/variable_extension.js",
+    "./styles": "./src/styles/lexxy_variables.css",
+    "./styles/lexxy_variables.css": "./src/styles/lexxy_variables.css"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "build": "node script/build_js.mjs"
+  },
+  "peerDependencies": {
+    "@37signals/lexxy": ">=0.9.22",
+    "lexical": ">=0.16"
+  },
+  "license": "MIT"
+}

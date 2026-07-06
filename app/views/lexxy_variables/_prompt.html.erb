@@ -1,0 +1,27 @@
+<%# Feeds the editor extension. Built from LexxyVariables.config.catalog. A host
+    can override this file by creating app/views/lexxy_variables/_prompt.html.erb. %>
+<% show_types = items.map { |i| LexxyVariables.item_content_type(i) }.uniq.size > 1 %>
+<lexxy-prompt trigger="<%= trigger %>" name="variable" empty-results="<%= empty_results %>">
+  <% items.each do |item| %>
+    <% key = LexxyVariables.item_key(item) %>
+    <% name = LexxyVariables.item_name(item) %>
+    <% content_type = LexxyVariables.item_content_type(item) %>
+    <% type_label = show_types ? LexxyVariables.item_type_label(item) : nil %>
+    <lexxy-prompt-item search="<%= "#{name} #{key}" %>" sgid="<%= LexxyVariables.item_sgid(item) %>">
+      <template type="menu">
+        <span class="lexxy-variables-option">
+          <span class="lexxy-variables-option__header">
+            <span class="lexxy-variables-option__name"><%= name %></span>
+            <% if type_label.present? %>
+              <span class="lexxy-variables-option__type"><%= type_label %></span>
+            <% end %>
+          </span>
+          <code class="lexxy-variables-option__code">{{ <%= key %> }}</code>
+        </span>
+      </template>
+      <%= tag.template(type: "editor", "content-type": content_type) do %><%=
+        lexxy_variable_chip(name, key: key, block: LexxyVariables.block_content_type?(content_type))
+      %><% end %>
+    </lexxy-prompt-item>
+  <% end %>
+</lexxy-prompt>

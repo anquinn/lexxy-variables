@@ -1,0 +1,115 @@
+/*
+ * Default styles for lexxy-variables. Import this for a working out-of-the-box
+ * look. Override the CSS custom properties (or the classes) to match your app.
+ *
+ * Classes this gem emits:
+ *   .lexxy-variable                 variable token chip (in the editor)
+ *   .lexxy-variable--block          modifier for chips that expand to a block
+ *   .lexxy-variables-menu           the toolbar "insert variable" dropdown panel
+ *   .lexxy-variables-menu__item     a button within that dropdown
+ *   .lexxy-variables-option         option content, cloned into the {{ prompt
+ *   .lexxy-variables-option__header popup AND the toolbar dropdown
+ *   .lexxy-variables-option__name
+ *   .lexxy-variables-option__type
+ *   .lexxy-variables-option__code
+ */
+
+/* Variable token chip. In published pages chips are replaced by resolved values. */
+.lexxy-variable {
+  display: inline-block;
+  padding: 0 0.4em;
+  border-radius: var(--lexxy-variable-radius, 0.375rem);
+  background: var(--lexxy-variable-background, #eef2ff);
+  color: var(--lexxy-variable-color, #3730a3);
+  font-size: 0.875em;
+  white-space: nowrap;
+}
+
+/* For chips that stand in for a rich block (e.g. snippets). Dashed edge hints
+   at "placeholder for a larger block". */
+.lexxy-variable--block {
+  border: var(--lexxy-variable-block-border, 1px dashed #6366f1);
+}
+
+/* Toolbar "insert variable" dropdown. Deliberately a labelled list, not Lexxy's
+   icon-grid toolbar-dropdown-list. */
+.lexxy-variables-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: var(--lexxy-variables-menu-min-width, 14rem);
+  max-width: var(--lexxy-variables-menu-max-width, min(20rem, 85vw));
+  max-height: var(--lexxy-variables-menu-max-height, 20rem);
+  overflow-y: auto;
+  background: var(--lexxy-variables-menu-background, #fff);
+}
+
+.lexxy-variables-menu__item {
+  display: flex;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lexxy-variables-menu__item:hover {
+  background-color: var(--lexxy-variables-menu-item-hover-background, rgba(0, 0, 0, 0.06));
+}
+
+/* Option content, cloned into both the {{ prompt popup (styled by Lexxy) and the
+   toolbar dropdown. Stacks the name over the code and ellipsizes long keys so a
+   narrow popup never wraps mid-token. */
+/* Lexxy caps its prompt popup at 20ch, which wraps names and truncates keys.
+   Raise the cap (Lexxy sets it via :where(), so this plain class wins). */
+.lexxy-prompt-menu {
+  max-inline-size: var(--lexxy-variables-prompt-max-width, min(24rem, 90vw));
+}
+
+.lexxy-variables-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.lexxy-variables-option__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.lexxy-variables-option__name {
+  min-width: 0;
+  font-size: 0.875rem;
+}
+
+/* Type badge (e.g. "Snippet"), shown on the name row only when the list mixes
+   types. Sits to the right without adding a line. */
+.lexxy-variables-option__type {
+  flex-shrink: 0;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 9999px;
+  background: var(--lexxy-variables-option-type-background, rgba(0, 0, 0, 0.06));
+  color: var(--lexxy-variables-option-type-color, #6b7280);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.lexxy-variables-option__code {
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+  font-size: 0.75rem;
+  color: var(--lexxy-variables-option-code-color, #9ca3af);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
