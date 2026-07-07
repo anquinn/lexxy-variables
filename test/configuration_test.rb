@@ -11,7 +11,7 @@ class ConfigurationTest < Minitest::Test
     match = @config.registry.match("content-type" => LexxyVariables::VARIABLE_CONTENT_TYPE)
 
     refute_nil match
-    assert_equal :value, match.phase
+    assert_equal :text, match.renders_as
   end
 
   def test_catalog_accepts_a_plain_list
@@ -103,12 +103,22 @@ class ConfigurationTest < Minitest::Test
   def test_register_attachment_adds_a_type
     @config.register_attachment(
       content_type: "application/vnd.actiontext.snippet",
-      phase: :fragment,
+      renders_as: :html,
       resolve: ->(node, context) { "html" }
     )
 
     match = @config.registry.match("content-type" => "application/vnd.actiontext.snippet")
-    assert_equal :fragment, match.phase
+    assert_equal :html, match.renders_as
+  end
+
+  def test_register_attachment_rejects_an_unknown_renders_as
+    assert_raises(ArgumentError) do
+      @config.register_attachment(
+        content_type: "application/vnd.actiontext.snippet",
+        renders_as: :fragment,
+        resolve: ->(node, context) { "html" }
+      )
+    end
   end
 
   # The default variable resolver is what a plain-hash catalog (the README's

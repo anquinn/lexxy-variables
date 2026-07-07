@@ -12,7 +12,7 @@ module LexxyVariables
   # assigns: ->(context, used_keys) or ->(used_keys) returning a Hash of
   #   key => value for a render. Omit to read #value off catalog items.
   # renderer: Renderers::Substitution (default, no Liquid) or Renderers::Liquid.
-  # max_fragment_depth: how deep :fragment chips (e.g. snippets) expand. The
+  # max_fragment_depth: how deep :html chips (e.g. snippets) expand. The
   #   default of 1 resolves a snippet's inner variables and drops nested snippets.
   # content_layout: the ActionText content layout wrapper for rendered output.
   # sort: how the catalog is ordered in the prompt and dropdown. Defaults to
@@ -36,9 +36,16 @@ module LexxyVariables
 
     # Adds or overrides an attachment type. Variables are pre-registered. A host
     # calls this to add types like snippets, or to override the variable resolver.
+    # `renders_as` is :text (default, resolver returns a key whose value is
+    # substituted HTML-escaped) or :html (resolver returns rich content spliced
+    # in pre-sanitize, e.g. snippets).
     # `label` is an optional badge name shown in the prompt when types are mixed.
-    def register_attachment(content_type:, phase:, resolve:, label: nil)
-      registry.register(AttachmentType.new(content_type:, phase:, resolve:, label:))
+    def register_attachment(content_type:, resolve:, renders_as: :text, label: nil)
+      unless %i[text html].include?(renders_as)
+        raise ArgumentError, "renders_as must be :text or :html, got #{renders_as.inspect}"
+      end
+
+      registry.register(AttachmentType.new(content_type:, renders_as:, resolve:, label:))
     end
 
     def resolve_catalog(context)
@@ -65,7 +72,6 @@ module LexxyVariables
     def register_default_variable_type
       register_attachment(
         content_type: LexxyVariables::VARIABLE_CONTENT_TYPE,
-        phase: :value,
         resolve: ->(node, _context) {
           attachable = LexxyVariables.attachable_from(node)
           next attachable.key if attachable.respond_to?(:key)

@@ -42,7 +42,7 @@ module LexxyVariables
     end
 
     # Resolves an attachment node's sgid to its attachable, or nil if the sgid is
-    # missing or stale. Handy for host-supplied :value / :fragment resolvers.
+    # missing or stale. Handy for host-supplied resolvers.
     def attachable_from(node)
       ActionText::Attachable.from_attachable_sgid(node["sgid"])
     rescue StandardError
@@ -105,11 +105,11 @@ module LexxyVariables
       end
     end
 
-    # True when a content-type is registered as a :fragment type (e.g. snippets),
+    # True when a content-type is registered as renders_as: :html (e.g. snippets),
     # so its chip should render in the block style.
     def block_content_type?(content_type)
       type = registered_type(content_type)
-      type ? type.fragment? : false
+      type ? type.renders_as_html? : false
     end
 
     # The badge label for an item's type, or nil if none is registered.

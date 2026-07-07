@@ -10,8 +10,8 @@ You decide what variables exist and what they turn into.
 
 Because variables are just Action Text attachments, you can register new
 chip types with `register_attachment` (see [Full configuration](#full-configuration)):
-a `:value` chip resolves to an escaped string, a `:fragment` chip splices rich
-content in before sanitization.
+a chip that renders as `:text` resolves to an escaped string, one that renders
+as `:html` splices rich content in before sanitization.
 
 Liquid is **optional**. The default renderer is plain, injection-safe string
 substitution and pulls in no template engine.
@@ -131,30 +131,48 @@ tenant, `nil`, or any object.
 
 ```ruby
 LexxyVariables.configure do |c|
-  # The menu users pick from. A list, a zero-arg lambda, or a ->(context) lambda.
+  # What users can insert: the {{ prompt and the toolbar dropdown read this.
   c.catalog = ->(context) { context.variables + BuiltinVariable.all }
 
-  # The lookup. Gets only the keys used in the content being rendered and returns
-  # a { key => value } hash. ->(used_keys) also works if you don't need context.
+  # What each used key resolves to at render time.
   c.assigns = ->(context, used_keys) { MyResolver.assigns(context, used_keys) }
 
-  # Opt into Liquid for dotted access / drops / filters.
+  # Opt into Liquid for dotted access, drops, and filters.
   c.renderer = LexxyVariables::Renderers::Liquid.new
 
-  # How the catalog is ordered in the prompt and dropdown. Defaults to :name
-  # (case-insensitive alphabetical). Use :key to sort by key, false to keep the
-  # catalog's given order, or a lambda: a ->(item) sort key or a ->(a, b) comparator.
-  c.sort = :name
-
-  # Register an extra attachment type. :fragment splices rich HTML pre-sanitize
-  # (e.g. snippets) and its inner :value chips resolve in the same pass.
+  # A second chip type: snippets expand to rich HTML instead of an escaped value.
   c.register_attachment(
     content_type: "application/vnd.actiontext.snippet",
-    phase: :fragment,
+    renders_as: :html,
     label: "Snippet", # shown as a badge in the prompt when the list mixes types
     resolve: ->(node, context) { MySnippets.content_for(node, context) }
   )
 end
+```
+
+### All options
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `catalog` | `[]` | The insertable items shown in the `{{` prompt and the toolbar dropdown. A list, a zero-arg lambda, or a `->(context)` lambda. Items respond to `#key` and `#name`, and optionally `#value` and `#attachable_sgid`. |
+| `assigns` | reads `#value` off catalog items | The render-time lookup. A `->(context, used_keys)` or `->(used_keys)` lambda that receives only the keys used in the content being rendered and returns a `{ key => value }` hash. |
+| `renderer` | `Renderers::Substitution.new` | How placeholders become values. The default is plain, escaped string substitution with no template engine. Swap in `Renderers::Liquid.new` for dotted access, drops, and filters. |
+| `sort` | `:name` | How the catalog is ordered in the prompt and dropdown. `:name` (case-insensitive alphabetical), `:key`, `false` to keep the catalog's given order, or a lambda (a `->(item)` sort key or a `->(a, b)` comparator). |
+| `max_fragment_depth` | `1` | How many levels of `renders_as: :html` chips expand. The default resolves the variables inside a snippet but drops a snippet nested inside another snippet. Raise it to allow deeper nesting. |
+| `content_layout` | `"layouts/action_text/contents/content"` | The Action Text layout that wraps rendered output. Point it at your own partial to change the wrapper, for example when rendering into emails. |
+| `register_attachment(content_type:, resolve:, renders_as:, label:)` | variable type pre-registered | Adds or replaces a chip type. `renders_as:` is `:text` (default, the resolver returns a key whose escaped value is substituted in) or `:html` (splices rich HTML in pre-sanitize, resolving inner `:text` chips in the same pass, bounded by `max_fragment_depth`). `label:` is the badge shown in the prompt when the list mixes types. Re-registering a content type (including the built-in variable type) replaces it, which is how you'd swap in a custom variable resolver. |
+
+### Helper options
+
+Both view helpers take `context:` (see [Multi-tenancy](#multi-tenancy)). Beyond
+that, `lexxy_variables_prompt` lets you change the trigger characters and the
+empty state, and `render_lexxy_content` can render under a specific locale by
+wrapping the whole pass in `I18n.with_locale`.
+
+```erb
+<%= lexxy_variables_prompt(trigger: "%%", empty_results: t(".no_variables")) %>
+
+<%= render_lexxy_content(@record.body, locale: recipient.locale) %>
 ```
 
 ## Multi-tenancy
@@ -250,9 +268,9 @@ popup and the dropdown:
 - Every render gets a fresh random nonce that guards the placeholder tokens, so an
   author can't fake a substitution by typing the token pattern into the body.
 - Chips are swapped for those nonce tokens before the HTML is sanitized, and the
-  real values go in afterward. A `:value` resolves to HTML-escaped text that can't
-  do anything, while a `:fragment` is spliced in before sanitizing so the sanitizer
-  still scrubs it.
+  real values go in afterward. A `:text` chip resolves to HTML-escaped text that
+  can't do anything, while an `:html` chip is spliced in before sanitizing so the
+  sanitizer still scrubs it.
 - Only the Liquid renderer deals with template-engine braces (`{{ }}` and `{% %}`).
   The default renderer runs no engine at all, so there's nothing there to inject into.
 

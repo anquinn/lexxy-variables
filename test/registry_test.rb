@@ -5,8 +5,8 @@ class RegistryTest < Minitest::Test
     @registry = LexxyVariables::Registry.new
   end
 
-  def type(content_type, phase: :value)
-    LexxyVariables::AttachmentType.new(content_type: content_type, phase: phase, resolve: ->(*) { })
+  def type(content_type, renders_as: :text)
+    LexxyVariables::AttachmentType.new(content_type: content_type, renders_as: renders_as, resolve: ->(*) { })
   end
 
   def test_matches_by_content_type
@@ -24,8 +24,8 @@ class RegistryTest < Minitest::Test
   end
 
   def test_re_registering_same_content_type_overrides
-    first = type("x", phase: :value)
-    second = type("x", phase: :fragment)
+    first = type("x", renders_as: :text)
+    second = type("x", renders_as: :html)
     @registry.register(first)
     @registry.register(second)
 

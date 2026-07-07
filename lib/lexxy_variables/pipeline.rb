@@ -5,8 +5,8 @@ module LexxyVariables
   #   1. A random per-render nonce guards placeholder tokens, so an author cannot
   #      forge a substitution by typing the token pattern into the body.
   #   2. Attachments are swapped for nonce tokens BEFORE sanitization and resolved
-  #      values are injected AFTER. :value output is HTML-escaped and therefore
-  #      inert. :fragment output is spliced pre-sanitize so the sanitizer cleans it.
+  #      values are injected AFTER. :text output is HTML-escaped and therefore
+  #      inert. :html output is spliced pre-sanitize so the sanitizer cleans it.
   #   3. Any template-engine escaping (Liquid braces) lives only in that renderer.
   #
   # Needs a view context (self, from the helper) for Action Text rendering.
@@ -46,17 +46,17 @@ module LexxyVariables
         type = @config.registry.match(node)
         next node unless type # images, files, and unknown attachments pass through
 
-        if type.value?
-          resolve_value(node, type)
-        elsif type.fragment?
-          resolve_fragment(node, type, depth)
+        if type.renders_as_text?
+          resolve_text(node, type)
+        elsif type.renders_as_html?
+          resolve_html(node, type, depth)
         else
           node
         end
       end
     end
 
-    def resolve_value(node, type)
+    def resolve_text(node, type)
       key = type.resolve.call(node, @context)
       return empty_text(node) if key.nil?
 
@@ -64,7 +64,7 @@ module LexxyVariables
       Nokogiri::XML::Text.new(Placeholder.token(@nonce, key), node.document)
     end
 
-    def resolve_fragment(node, type, depth)
+    def resolve_html(node, type, depth)
       return empty_text(node) if depth >= @config.max_fragment_depth
 
       inner = coerce_fragment(type.resolve.call(node, @context))
@@ -73,7 +73,7 @@ module LexxyVariables
       substitute(inner, depth + 1)
     end
 
-    # Accepts whatever a :fragment resolver returns (ActionText content, rich
+    # Accepts whatever a :html resolver returns (ActionText content, rich
     # text, a Nokogiri node, or an HTML string) and coerces it to the
     # ActionText::Fragment that #substitute needs, or nil to drop the chip.
     # The Nokogiri checks come before the respond_to? checks because Nokogiri

@@ -34,7 +34,6 @@ class PipelineTest < Minitest::Test
     @config = LexxyVariables::Configuration.new
     @config.register_attachment(
       content_type: VARIABLE_TYPE,
-      phase: :value,
       resolve: ->(node, _context) { node["data-key"] }
     )
     @pipeline = LexxyVariables::Pipeline.new(FakeView.new, @config)
@@ -65,7 +64,7 @@ class PipelineTest < Minitest::Test
   end
 
   def register_snippet(&resolve)
-    @config.register_attachment(content_type: SNIPPET_TYPE, phase: :fragment, resolve: resolve)
+    @config.register_attachment(content_type: SNIPPET_TYPE, renders_as: :html, resolve: resolve)
   end
 
   def test_blank_body_renders_to_an_empty_html_safe_string
@@ -138,7 +137,6 @@ class PipelineTest < Minitest::Test
     seen = []
     @config.register_attachment(
       content_type: VARIABLE_TYPE,
-      phase: :value,
       resolve: ->(node, context) { seen << context and node["data-key"] }
     )
     @config.assigns = ->(context, _keys) { seen << context and {} }
@@ -218,7 +216,6 @@ class PipelineTest < Minitest::Test
     locales_seen = []
     @config.register_attachment(
       content_type: VARIABLE_TYPE,
-      phase: :value,
       resolve: ->(node, _context) { locales_seen << I18n.locale and node["data-key"] }
     )
     I18n.available_locales = [ :en, :fr ]
