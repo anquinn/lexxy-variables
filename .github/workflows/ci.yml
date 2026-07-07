@@ -48,7 +48,7 @@ jobs:
         with:
           node-version: "22"
       - run: npm install
-      - run: npx playwright install chromium --with-deps
+      - run: npx playwright install chromium
       - run: npm run test:browser
 
   # The vendored JS and CSS must always match src/. Rebuild and fail if a

@@ -30,9 +30,15 @@ test("typing the {{ trigger opens the prompt and inserting swaps it for a chip",
 
 test("the prompt filters as you type and inserts with Enter", async ({ page }) => {
   await editable(page).click()
-  await editable(page).pressSequentially("{{first")
+  await editable(page).pressSequentially("{{")
 
+  // Lexxy attaches its refilter listener only after the popover has opened,
+  // so filter keystrokes must come after the menu is visible or they are
+  // silently ignored.
   const menu = page.locator(".lexxy-prompt-menu--visible")
+  await expect(menu).toBeVisible()
+  await editable(page).pressSequentially("first")
+
   await expect(menu.locator(".lexxy-prompt-menu__item")).toHaveCount(1)
 
   await page.keyboard.press("Enter")
