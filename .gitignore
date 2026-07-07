@@ -13,3 +13,7 @@ yarn.lock
 
 .ruby-lsp/
 .DS_Store
+
+test-results/
+playwright-report/
+.playwright-mcp/

@@ -1,13 +1,19 @@
 import * as Lexxy from "@37signals/lexxy"
-import { $getSelection, $isTextNode, $createTextNode } from "lexical"
+
+// Lexxy 0.9.23+ re-exports the Lexical instance the editor runs, so extensions
+// never pull in a second copy of the lexical package.
+const { $getSelection, $isTextNode, $createTextNode, $isParagraphNode, $createLineBreakNode } = Lexxy.Lexical
 
 const VARIABLE_CONTENT_TYPE = "application/vnd.actiontext.variable"
 
-// Lexxy 0.9.22 anchors prompt replacement on lastIndexOf(trigger[0]), which
-// lands on the second brace of a "{{" trigger and silently aborts the insert.
-// Replace the search with one that scans back until the full string matches.
-// Runs inside the caller's editor.update(), like the original.
-// TODO: upstream to @37signals/lexxy and drop this patch.
+// Lexxy 0.9.19 (commit 9d23f39) regressed prompt replacement: it anchors on
+// lastIndexOf(trigger[0]), which lands on the second brace of a "{{" trigger
+// and silently aborts the insert. Still broken as of 0.9.23. Search for the
+// full string instead, bounding the match start with lastIndexOf's fromIndex
+// so a match can straddle the cursor, mirroring the fix proposed upstream in
+// basecamp/lexxy#1179 (issue #1165). Runs inside the caller's editor.update(),
+// like the original.
+// TODO: drop this patch once #1179 ships in a release.
 let contentsPatched = false
 
 function patchReplaceTextBackUntil(contents) {
@@ -26,10 +32,8 @@ function patchReplaceTextBackUntil(contents) {
     const fullText = anchorNode.getTextContent()
     const offset = selection.anchor.offset
 
-    let start = fullText.slice(0, offset).lastIndexOf(stringToReplace[0])
-    while (start !== -1 && !fullText.startsWith(stringToReplace, start)) {
-      start = fullText.slice(0, start).lastIndexOf(stringToReplace[0])
-    }
+    if (offset === 0) return // a negative fromIndex clamps to 0 and could match at the cursor
+    const start = fullText.lastIndexOf(stringToReplace, offset - 1)
     if (start === -1) return
 
     const cloneFormatting = (text) => $createTextNode(text)
@@ -49,6 +53,16 @@ function patchReplaceTextBackUntil(contents) {
       previous = node
     }
     previous.insertAfter(nodeAfter)
+
+    const paragraph = nodeAfter.getParentOrThrow()
+    if ($isParagraphNode(paragraph) && this.editorElement.supportsMultiLine) {
+      const children = paragraph.getChildren()
+      const last = children[children.length - 1]
+      const beforeLast = children[children.length - 2]
+      if ($isTextNode(last) && last.getTextContent() === "" && (beforeLast && !$isTextNode(beforeLast))) {
+        paragraph.append($createLineBreakNode())
+      }
+    }
 
     const cursorOffset = textAfter ? 0 : 1
     nodeAfter.select(cursorOffset, cursorOffset)

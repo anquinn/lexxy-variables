@@ -22,8 +22,8 @@ substitution and pulls in no template engine.
 
 ## Requirements
 
-Ruby 3.2+, Rails 8.0+, and a JavaScript bundler (esbuild, vite, or webpack).
-See the note on importmap in [Install](#install).
+Ruby 3.2+, Rails 8.0+, and Lexxy 0.9.23+. Works with importmap-rails or any
+JavaScript bundler (esbuild, vite, webpack).
 
 ## Install
 
@@ -34,40 +34,29 @@ Ruby:
 gem "lexxy-variables"
 ```
 
-JavaScript. The editor extension is distributed as an npm package, so you need a
-bundler (esbuild, vite, webpack). Install it alongside Lexxy:
+Then wire up the JavaScript, either via importmap or a bundler.
 
-```sh
-yarn add lexxy-variables @37signals/lexxy
-```
-
-Then register the extension in your JavaScript entrypoint:
+**importmap-rails.** Install Lexxy per [its docs](https://basecamp.github.io/lexxy/docs/)
+(`pin "lexxy", to: "lexxy.js"`). The engine pins `lexxy-variables` and
+`@37signals/lexxy` for you, so the only step left is registering the extension
+in your entrypoint:
 
 ```js
+// app/javascript/application.js
 import VariableExtension from "lexxy-variables"
 import * as Lexxy from "@37signals/lexxy"
 
 Lexxy.configure({ global: { extensions: [ VariableExtension ] } })
 ```
 
-The extension imports a few primitives from `lexical`, and Lexical is very
-sensitive to running as a single instance. If your bundle ends up with two
-copies of `lexical` (a common one: your app pulls a newer `lexical` than the
-version Lexxy bundles), commands dispatched from one instance won't see nodes
-from the other and inserts fail silently. If you hit that, pin `lexical` to the
-version Lexxy bundles so everything dedupes to one copy:
+**Bundler (esbuild, vite, webpack).** The extension is also distributed as an
+npm package. Install it alongside Lexxy:
 
 ```sh
-# match the lexical Lexxy depends on (0.44.x for Lexxy 0.9.22)
-yarn add lexical@0.44.0
+yarn add lexxy-variables @37signals/lexxy
 ```
 
-> **importmap is not supported yet.** The extension needs `lexical` and
-> `@37signals/lexxy` resolved to the same instance Lexxy runs, which importmap
-> can't currently guarantee. The gem still ships the vendored JS and pins so it
-> works the moment Lexxy exposes Lexical to extensions upstream
-> ([basecamp/lexxy#1047](https://github.com/basecamp/lexxy/pull/1047)). Until
-> then, use a bundler.
+and register the extension with the same snippet as above.
 
 ## Minimal configuration
 
@@ -221,9 +210,10 @@ it and override the CSS custom properties (or the classes) to match your app.
 @import "lexxy-variables/styles";
 ```
 
-```ruby
-# importmap / asset-pipeline hosts: the engine adds the vendored CSS to the asset
-# paths. Link or @import "lexxy_variables.css".
+```erb
+<%# importmap / asset-pipeline hosts: the engine puts the vendored CSS on the
+    asset path, so link it (or @import "lexxy_variables.css" from your CSS) %>
+<%= stylesheet_link_tag "lexxy_variables" %>
 ```
 
 Classes the gem emits: `.lexxy-variable` (token chip), `.lexxy-variable--block`
@@ -284,6 +274,15 @@ bundle exec rake test     # run the test suite
 bundle exec rubocop       # lint
 ```
 
+The browser suite drives the real editor in Chromium through the same import
+map an importmap host uses, covering the `{{` prompt and the toolbar dropdown:
+
+```sh
+npm install
+npx playwright install chromium
+npm run test:browser
+```
+
 The editor extension in `src/` is compiled into `vendor/` (the copy importmap
 apps load). If you change anything under `src/`, rebuild before committing or CI
 will fail:
@@ -293,6 +292,6 @@ npm install
 npm run build
 ```
 
-CI runs the tests across Ruby 3.2–4.0, rubocop, and a check that `vendor/`
-matches `src/`.
+CI runs the tests across Ruby 3.2–4.0, rubocop, the browser suite, and a check
+that `vendor/` matches `src/`.
 
