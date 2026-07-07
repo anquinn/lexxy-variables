@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.2
+## 0.0.2 (2026-07-07)
 
 - Require Lexxy 0.9.23+ and read Lexical primitives from its re-exported
   `Lexical` namespace instead of importing the `lexical` package directly, so
