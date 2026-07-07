@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags: [ "v*" ]
+
+permissions:
+  contents: read
+
+jobs:
+  # Nothing publishes unless the tag, version.rb and package.json all agree,
+  # vendor/ matches src/, and the tests pass on the tagged commit.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tag matches version.rb and package.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          ruby_version="$(ruby -r ./lib/lexxy_variables/version -e 'puts LexxyVariables::VERSION')"
+          npm_version="$(node -p "require('./package.json').version")"
+          echo "tag=$tag version.rb=$ruby_version package.json=$npm_version"
+          test "$tag" = "$ruby_version"
+          test "$tag" = "$npm_version"
+      - run: npm run build
+      - run: git diff --exit-code vendor/
+      - run: bundle exec rake test
+
+  # Publishes via RubyGems trusted publishing (OIDC), no API key involved.
+  # The action runs `rake release`, which sees the tag already exists and
+  # skips straight to pushing the gem.
+  publish-gem:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - uses: rubygems/release-gem@v1
+
+  # Publishes via npm trusted publishing (OIDC), no token involved.
+  # Provenance is attached automatically.
+  publish-npm:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+      # Trusted publishing needs npm 11.5.1 or newer.
+      - run: npm install -g npm@latest
+      - run: npm publish
