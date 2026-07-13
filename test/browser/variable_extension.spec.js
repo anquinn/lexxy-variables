@@ -11,9 +11,9 @@ const editable = (page) => page.locator("lexxy-editor [contenteditable='true']")
 const chip = (page) => page.locator("lexxy-editor action-text-attachment .lexxy-variable")
 
 test("typing the {{ trigger opens the prompt and inserting swaps it for a chip", async ({ page }) => {
-  // Regression test for the replaceTextBackUntil patch: stock Lexxy (through
-  // 0.9.23) anchors the replacement on the trigger's first character with
-  // lastIndexOf, so a two-char "{{" trigger silently aborts the insert.
+  // Regression test for basecamp/lexxy#1179: Lexxy through 0.9.23 anchored the
+  // prompt replacement on the trigger's first character with lastIndexOf, so a
+  // two-char "{{" trigger silently aborted the insert. Fixed on lexxy main.
   await editable(page).click()
   await editable(page).pressSequentially("Hello {{")
 

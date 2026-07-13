@@ -22,8 +22,9 @@ substitution and pulls in no template engine.
 
 ## Requirements
 
-Ruby 3.2+, Rails 8.0+, and Lexxy 0.9.23+. Works with importmap-rails or any
-JavaScript bundler (esbuild, vite, webpack).
+Ruby 3.2+, Rails 8.0+, and Lexxy 0.9.24+ (earlier versions have a regression
+that breaks inserting from a two-character `{{` trigger). Works with
+importmap-rails or any JavaScript bundler (esbuild, vite, webpack).
 
 ## Install
 

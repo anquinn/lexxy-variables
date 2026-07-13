@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.3
+
+- Drop the local `replaceTextBackUntil` workaround for the double `{{` prompt
+  bug now that the fix (basecamp/lexxy#1179) ships in Lexxy 0.9.24.
+- Require Lexxy 0.9.24+ (Gemfile constraint and the `@37signals/lexxy` peer
+  dependency).
+
 ## 0.0.2 (2026-07-07)
 
 - Require Lexxy 0.9.23+ and read Lexical primitives from its re-exported
