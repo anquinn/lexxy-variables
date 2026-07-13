@@ -18,7 +18,7 @@ module LexxyVariables
       @config = config
     end
 
-    def call(rich_text, context: nil, locale: I18n.locale)
+    def call(rich_text, context: nil, locale: I18n.locale, assigns: {})
       body = rich_text&.body
       return "".html_safe if body.blank?
 
@@ -32,8 +32,9 @@ module LexxyVariables
           ActionText::Content.new(fragment.to_html, canonicalize: false)
         )
 
-        assigns = @config.resolve_assigns(@context, @used_keys.uniq)
-        rendered = @config.renderer.render(html, nonce: @nonce, assigns: assigns)
+        resolved = @config.resolve_assigns(@context, @used_keys.uniq)
+        resolved = resolved.merge(assigns.transform_keys(&:to_s)) if assigns.any?
+        rendered = @config.renderer.render(html, nonce: @nonce, assigns: resolved)
 
         @view.render(layout: @config.content_layout) { rendered.html_safe }
       end

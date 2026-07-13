@@ -39,12 +39,12 @@ class PipelineTest < Minitest::Test
     @pipeline = LexxyVariables::Pipeline.new(FakeView.new, @config)
   end
 
-  def render(html, context: nil, locale: nil)
+  def render(html, context: nil, locale: nil, assigns: {})
     content = ActionText::Content.new(html, canonicalize: false)
     if locale
-      @pipeline.call(FakeRichText.new(content), context: context, locale: locale)
+      @pipeline.call(FakeRichText.new(content), context: context, locale: locale, assigns: assigns)
     else
-      @pipeline.call(FakeRichText.new(content), context: context)
+      @pipeline.call(FakeRichText.new(content), context: context, assigns: assigns)
     end
   end
 
@@ -131,6 +131,53 @@ class PipelineTest < Minitest::Test
     render("<p>#{variable_chip('company')}#{variable_chip('company')}#{variable_chip('other')}</p>")
 
     assert_equal [ "company", "other" ], captured
+  end
+
+  # Inline assigns: per-render values passed to #call, merged on top of the
+  # configured assigns. The catalog still governs what is insertable; these only
+  # supply values at render time.
+
+  def test_inline_assigns_supply_a_value_with_no_configured_assigns
+    out = render("<p>Hi #{variable_chip('first_name')}!</p>", assigns: { first_name: "Ada" })
+
+    assert_equal "<p>Hi Ada!</p>", out
+  end
+
+  def test_inline_assigns_override_the_configured_assigns
+    @config.assigns = ->(_context, _keys) { { "first_name" => "Config" } }
+
+    out = render("<p>#{variable_chip('first_name')}</p>", assigns: { first_name: "Inline" })
+
+    assert_equal "<p>Inline</p>", out
+  end
+
+  def test_inline_assigns_are_html_escaped_under_the_default_renderer
+    out = render("<p>#{variable_chip('first_name')}</p>", assigns: { first_name: "<script>x</script>" })
+
+    refute_includes out, "<script>"
+    assert_includes out, "&lt;script&gt;"
+  end
+
+  def test_inline_assigns_with_no_matching_chip_are_a_no_op
+    out = render("<p>plain</p>", assigns: { plan: "pro" })
+
+    assert_equal "<p>plain</p>", out
+  end
+
+  def test_inline_assigns_with_no_matching_chip_are_a_no_op_under_liquid
+    @config.renderer = LexxyVariables::Renderers::Liquid.new
+
+    out = render("<p>plain</p>", assigns: { plan: Object.new })
+
+    assert_equal "<p>plain</p>", out
+  end
+
+  def test_inline_assigns_pass_drops_through_to_liquid_with_string_keys
+    @config.renderer = LexxyVariables::Renderers::Liquid.new
+
+    out = render("<p>#{variable_chip('company.name')}</p>", assigns: { company: CompanyDrop.new })
+
+    assert_equal "<p>Acme</p>", out
   end
 
   def test_context_reaches_resolvers_and_assigns
