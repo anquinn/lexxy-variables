@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.3
+## 0.0.3 (2026-07-13)
 
 - Drop the local `replaceTextBackUntil` workaround for the double `{{` prompt
   bug now that the fix (basecamp/lexxy#1179) ships in Lexxy 0.9.24.
