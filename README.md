@@ -44,8 +44,8 @@ in your entrypoint:
 
 ```js
 // app/javascript/application.js
+import * as Lexxy from "lexxy"
 import VariableExtension from "lexxy-variables"
-import * as Lexxy from "@37signals/lexxy"
 
 Lexxy.configure({ global: { extensions: [ VariableExtension ] } })
 ```
@@ -54,10 +54,18 @@ Lexxy.configure({ global: { extensions: [ VariableExtension ] } })
 npm package. Install it alongside Lexxy:
 
 ```sh
-yarn add lexxy-variables @37signals/lexxy
+yarn add @37signals/lexxy lexxy-variables
 ```
 
-and register the extension with the same snippet as above.
+and register the extension in your JavaScript.
+
+```js
+// app/javascript/application.js
+import * as Lexxy from "@37signals/lexxy"
+import VariableExtension from "lexxy-variables"
+
+Lexxy.configure({ global: { extensions: [ VariableExtension ] } })
+```
 
 ## Minimal configuration
 
