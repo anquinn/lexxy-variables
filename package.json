@@ -25,7 +25,7 @@
     "test:browser": "playwright test"
   },
   "peerDependencies": {
-    "@37signals/lexxy": ">=0.9.23"
+    "@37signals/lexxy": ">=0.9.24"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0"
