@@ -1,6 +1,6 @@
 {
   "name": "lexxy-variables",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Insert and safely resolve variables in Lexxy rich text, stored as Action Text attachment chips.",
   "type": "module",
   "homepage": "https://github.com/anquinn/lexxy-variables",

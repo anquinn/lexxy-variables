@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.4 (2026-07-13)
+## 0.0.4 (2026-07-14)
 
 - Rename the view helper `render_lexxy_content` to `render_variable_content`.
 - `render_variable_content` now accepts inline assigns. Pass a key's value
