@@ -5,13 +5,13 @@ module LexxyVariables
     # `assigns:` (and any extra keyword args) are per-render values merged on top
     # of the configured `assigns`, so a caller can supply a key's value inline:
     #
-    #   render_lexxy_content(@record.body, first_name: @user.first_name)
+    #   render_variable_content(@record.body, first_name: @user.first_name)
     #
     # Inline values win over the configured assigns. Keys not used by any chip in
     # the body are ignored. Under the default renderer inline values are
     # HTML-escaped; under Liquid they are emitted as-is, so pre-escape them or
     # pass a drop.
-    def render_lexxy_content(rich_text, context: nil, locale: I18n.locale, assigns: {}, **inline_assigns)
+    def render_variable_content(rich_text, context: nil, locale: I18n.locale, assigns: {}, **inline_assigns)
       LexxyVariables::Pipeline.new(self).call(
         rich_text, context: context, locale: locale, assigns: assigns.merge(inline_assigns)
       )
