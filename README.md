@@ -110,7 +110,7 @@ On the **display page** (where the saved content is shown to readers), resolve
 the stored rich text. This is what swaps each variable chip for its value:
 
 ```erb
-<%= render_lexxy_content(@record.body) %>
+<%= render_variable_content(@record.body) %>
 ```
 
 Each chip resolves to its value, so the reader sees finished text:
@@ -152,7 +152,7 @@ Editor page:
 Display page:
 
 ```erb
-<%= render_lexxy_content(@message.body,
+<%= render_variable_content(@message.body,
       first_name: @user.first_name,
       last_name:  @user.last_name) %>
 ```
@@ -170,7 +170,7 @@ end
 ```
 
 ```erb
-<%= render_lexxy_content(@message.body) %>
+<%= render_variable_content(@message.body) %>
 ```
 
 ### Liquid drops and dotted access
@@ -207,7 +207,7 @@ end
 ```
 
 ```erb
-<%= render_lexxy_content(@message.body) %>
+<%= render_variable_content(@message.body) %>
 ```
 
 A `user.first_name` chip becomes `{{ user.first_name }}`, which Liquid runs through the drop. Only the methods defined on the drop are reachable, not arbitrary attributes on the user. Liquid doesn't escape output the way the default renderer does, so the drop escapes its own values. The same goes for any plain string returned from `assigns` or passed inline.
@@ -242,7 +242,7 @@ end
 | Option | Default | What it does |
 | --- | --- | --- |
 | `catalog` | `[]` | The insertable items shown in the `{{` prompt and the toolbar dropdown. A list, a zero-arg lambda, or a `->(context)` lambda. Items respond to `#key` and `#name`, and optionally `#value` and `#attachable_sgid`. |
-| `assigns` | reads `#value` off catalog items | The render-time lookup. A `->(context, used_keys)` or `->(used_keys)` lambda that receives only the keys used in the content being rendered and returns a `{ key => value }` hash. Per-render values can also be passed straight to `render_lexxy_content` (see [Helper options](#helper-options)). |
+| `assigns` | reads `#value` off catalog items | The render-time lookup. A `->(context, used_keys)` or `->(used_keys)` lambda that receives only the keys used in the content being rendered and returns a `{ key => value }` hash. Per-render values can also be passed straight to `render_variable_content` (see [Helper options](#helper-options)). |
 | `renderer` | `Renderers::Substitution.new` | How placeholders become values. The default is plain, escaped string substitution with no template engine. Swap in `Renderers::Liquid.new` for dotted access, drops, and filters. |
 | `sort` | `:name` | How the catalog is ordered in the prompt and dropdown. `:name` (case-insensitive alphabetical), `:key`, `false` to keep the catalog's given order, or a lambda (a `->(item)` sort key or a `->(a, b)` comparator). |
 | `max_fragment_depth` | `1` | How many levels of `renders_as: :html` chips expand. The default resolves the variables inside a snippet but drops a snippet nested inside another snippet. Raise it to allow deeper nesting. |
@@ -253,26 +253,26 @@ end
 
 Both view helpers take `context:` (see [Multi-tenancy](#multi-tenancy)). Beyond
 that, `lexxy_variables_prompt` lets you change the trigger characters and the
-empty state, and `render_lexxy_content` can render under a specific locale by
+empty state, and `render_variable_content` can render under a specific locale by
 wrapping the whole pass in `I18n.with_locale`.
 
 ```erb
 <%= lexxy_variables_prompt(trigger: "%%", empty_results: t(".no_variables")) %>
 
-<%= render_lexxy_content(@record.body, locale: recipient.locale) %>
+<%= render_variable_content(@record.body, locale: recipient.locale) %>
 ```
 
-You can also pass a variable's value straight to `render_lexxy_content`, as
+You can also pass a variable's value straight to `render_variable_content`, as
 keyword arguments or an `assigns:` hash. These win over whatever the configured
 `assigns` returns, and a value for a key that isn't used in the content is just
 ignored:
 
 ```erb
 <%# keyword arguments %>
-<%= render_lexxy_content(@record.body, first_name: @user.first_name) %>
+<%= render_variable_content(@record.body, first_name: @user.first_name) %>
 
 <%# same thing, for a name that would clash with context: or locale: %>
-<%= render_lexxy_content(@record.body, assigns: { first_name: @user.first_name }) %>
+<%= render_variable_content(@record.body, assigns: { first_name: @user.first_name }) %>
 ```
 
 The default renderer escapes these values for you. Liquid doesn't, so escape
@@ -301,7 +301,7 @@ Both view helpers take the same `context:`. Pass the tenant on the editor page:
 and again on the display page:
 
 ```erb
-<%= render_lexxy_content(@record.body, context: ActsAsTenant.current_tenant) %>
+<%= render_variable_content(@record.body, context: ActsAsTenant.current_tenant) %>
 ```
 
 Or skip `context` entirely and rely on acts_as_tenant scoping queries to the
