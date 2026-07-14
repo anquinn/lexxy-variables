@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.4 (2026-07-13)
+
+- Rename the view helper `render_lexxy_content` to `render_variable_content`.
+- `render_variable_content` now accepts inline assigns. Pass a key's value
+  straight to the call (`render_variable_content(@record.body, first_name:
+  @user.first_name)` or an `assigns:` hash).
+- Correct the importmap and npm install docs to use the `lexxy` import name.
+
 ## 0.0.3 (2026-07-13)
 
 - Drop the local `replaceTextBackUntil` workaround for the double `{{` prompt
