@@ -1,14 +1,12 @@
 module LexxyVariables
   module Renderers
-    # Default renderer. Replaces nonce placeholders with resolved values by plain
-    # string substitution. There is no template engine, so author-typed text can
-    # never be interpreted as code. Each value is HTML-escaped, so it is inert and
-    # cannot reintroduce markup the sanitizer already stripped.
-    #
-    # `assigns` is a Hash of key => value. Values are coerced to escaped strings.
+    # Default renderer. Looks each key up in the assigns hash, no template
+    # engine, so author-typed text can never be interpreted as code. The value
+    # is returned raw: the resolver injects it as a DOM text node, where HTML
+    # serialization escapes it and plain-text/markdown conversions read it as-is.
     class Substitution
-      def render(html, nonce:, assigns:)
-        html.gsub(Placeholder.pattern(nonce)) { ERB::Util.html_escape(assigns[$1].to_s) }
+      def resolve_value(key, assigns)
+        assigns[key].to_s
       end
     end
   end

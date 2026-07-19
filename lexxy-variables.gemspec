@@ -8,11 +8,12 @@ Gem::Specification.new do |spec|
   spec.description = <<~DESC
     Insert and safely resolve variables in Lexxy rich text. The gem gives you an
     editor button (and a `{{` prompt) for inserting variables, each stored as an
-    Action Text attachment chip rather than literal markup, and resolves each chip
-    to its value at render time. Register new chip types with `register_attachment`:
-    a :value chip resolves to an escaped string, a :fragment chip splices rich
-    content in before sanitization. Liquid is optional. The default renderer is
-    plain, injection-safe string substitution and pulls in no template engine.
+    Action Text attachment chip rather than literal markup. `with_variables`
+    resolves the chips and returns plain Action Text content. Register new chip types
+    with `register_attachment`. A :text chip resolves to an escaped string, an
+    :html chip splices rich content in before sanitization. Liquid is optional.
+    The default renderer is plain, injection-safe string substitution and pulls
+    in no template engine.
   DESC
   spec.homepage = "https://github.com/anquinn/lexxy-variables"
   spec.license  = "MIT"

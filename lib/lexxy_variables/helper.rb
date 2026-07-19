@@ -1,22 +1,9 @@
 module LexxyVariables
-  # Mixed into Action View by the engine. `context` is opaque to the gem and is
-  # passed straight through to the host's catalog/assigns/resolve callables.
+  # Editor-side view helpers. LexxyVariables::Engine includes this module into
+  # Action View when the host app boots, so lexxy_variables_prompt and
+  # lexxy_variable_chip are callable from any view with no setup. `context` is
+  # opaque to the gem and is passed straight through to the host's catalog.
   module Helper
-    # `assigns:` (and any extra keyword args) are per-render values merged on top
-    # of the configured `assigns`, so a caller can supply a key's value inline:
-    #
-    #   render_variable_content(@record.body, first_name: @user.first_name)
-    #
-    # Inline values win over the configured assigns. Keys not used by any chip in
-    # the body are ignored. Under the default renderer inline values are
-    # HTML-escaped; under Liquid they are emitted as-is, so pre-escape them or
-    # pass a drop.
-    def render_variable_content(rich_text, context: nil, locale: I18n.locale, assigns: {}, **inline_assigns)
-      LexxyVariables::Pipeline.new(self).call(
-        rich_text, context: context, locale: locale, assigns: assigns.merge(inline_assigns)
-      )
-    end
-
     # Renders the <lexxy-prompt> the editor extension reads, built from the
     # configured catalog. `context` is passed to the catalog callable.
     def lexxy_variables_prompt(context: nil, trigger: "{{", empty_results: "No variables found")

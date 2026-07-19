@@ -14,20 +14,18 @@ module LexxyVariables
   # renderer: Renderers::Substitution (default, no Liquid) or Renderers::Liquid.
   # max_fragment_depth: how deep :html chips (e.g. snippets) expand. The
   #   default of 1 resolves a snippet's inner variables and drops nested snippets.
-  # content_layout: the ActionText content layout wrapper for rendered output.
   # sort: how the catalog is ordered in the prompt and dropdown. Defaults to
   #   :name (case-insensitive alphabetical). Use :key to sort by key, false to
   #   preserve the catalog's given order, or a callable: a ->(item) sort key, or
   #   a ->(a, b) comparator.
   class Configuration
-    attr_accessor :assigns, :renderer, :content_layout, :max_fragment_depth, :sort
+    attr_accessor :assigns, :renderer, :max_fragment_depth, :sort
     attr_reader :registry
     attr_writer :catalog
 
     def initialize
       @registry = Registry.new
       @renderer = Renderers::Substitution.new
-      @content_layout = "layouts/action_text/contents/content"
       @max_fragment_depth = 1
       @catalog = []
       @sort = :name

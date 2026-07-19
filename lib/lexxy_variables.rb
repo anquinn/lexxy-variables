@@ -1,5 +1,4 @@
 require "active_support"
-require "erb"
 require "securerandom"
 require "nokogiri"
 
@@ -10,15 +9,16 @@ require "lexxy_variables/registry"
 require "lexxy_variables/renderers/substitution"
 require "lexxy_variables/renderers/liquid"
 require "lexxy_variables/configuration"
-require "lexxy_variables/pipeline"
+require "lexxy_variables/resolver"
+require "lexxy_variables/with_variables"
 require "lexxy_variables/attachable"
 require "lexxy_variables/helper"
 require "lexxy_variables/engine" if defined?(Rails::Engine)
 
 # Insert and safely resolve variable/attachment tokens in Lexxy rich text.
 #
-# The gem owns the mechanism: the editor extension, the nonce-safe render
-# pipeline, the attachment-type registry, and the renderers. The host app owns
+# The gem owns the mechanism: the editor extension, the nonce-safe resolver,
+# the attachment-type registry, and the renderers. The host app owns
 # the policy: what variables exist (catalog), what a key resolves to (assigns),
 # and any extra attachment types (register_attachment, e.g. snippets).
 module LexxyVariables

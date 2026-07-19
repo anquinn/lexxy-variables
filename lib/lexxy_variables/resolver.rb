@@ -1,42 +1,35 @@
 module LexxyVariables
-  # Turns stored rich text into rendered HTML with attachment chips resolved.
+  # Resolves the attachment chips in stored rich text, returning a new
+  # ActionText::Content with every chip replaced by its value. The result is a
+  # plain content object, so Action Text's own conversions chain from it:
+  # #to_s (sanitized HTML), #to_plain_text, #to_markdown, #to_html.
   #
   # Security invariants (do not weaken):
   #   1. A random per-render nonce guards placeholder tokens, so an author cannot
   #      forge a substitution by typing the token pattern into the body.
-  #   2. Attachments are swapped for nonce tokens BEFORE sanitization and resolved
-  #      values are injected AFTER. :text output is HTML-escaped and therefore
-  #      inert. :html output is spliced pre-sanitize so the sanitizer cleans it.
-  #   3. Any template-engine escaping (Liquid braces) lives only in that renderer.
+  #   2. Resolved values are injected as DOM text nodes, never parsed as markup.
+  #      HTML serialization escapes them, and the sanitizer still runs when the
+  #      content is rendered. :html output is spliced as markup here, before that
+  #      render-time sanitization, so the sanitizer cleans it too.
+  #   3. Any template-engine parsing (Liquid) sees only chip keys, never body text.
   #
-  # Needs a view context (self, from the helper) for Action Text rendering.
-  # Build a fresh Pipeline per render, as the helper does. #call stores
-  # per-render state on the instance.
-  class Pipeline
-    def initialize(view, config = LexxyVariables.config)
-      @view = view
+  # Build a fresh Resolver per call. #call stores per-render state on the instance.
+  class Resolver
+    def initialize(config = LexxyVariables.config)
       @config = config
     end
 
-    def call(rich_text, context: nil, locale: I18n.locale, assigns: {})
-      body = rich_text&.body
-      return "".html_safe if body.blank?
-
+    def call(content, context: nil, locale: nil, assigns: {})
       @context = context
       @nonce = SecureRandom.hex(8)
       @used_keys = []
 
       I18n.with_locale(locale || I18n.locale) do
-        fragment = substitute(body.fragment, 0)
-        html = @view.render_action_text_content(
-          ActionText::Content.new(fragment.to_html, canonicalize: false)
-        )
-
+        fragment = substitute(content.fragment, 0)
         resolved = @config.resolve_assigns(@context, @used_keys.uniq)
         resolved = resolved.merge(assigns.transform_keys(&:to_s)) if assigns.any?
-        rendered = @config.renderer.render(html, nonce: @nonce, assigns: resolved)
-
-        @view.render(layout: @config.content_layout) { rendered.html_safe }
+        inject_values(fragment, resolved)
+        ActionText::Content.new(fragment, canonicalize: false)
       end
     end
 
@@ -72,6 +65,19 @@ module LexxyVariables
       return empty_text(node) if inner.nil?
 
       substitute(inner, depth + 1)
+    end
+
+    # Swaps each nonce-guarded token for its value, staying at the text-node
+    # level so values serialize as escaped text and read back raw in plain-text
+    # and markdown conversions. #substitute returned a fresh fragment, so
+    # mutating it in place is safe.
+    def inject_values(fragment, assigns)
+      pattern = Placeholder.pattern(@nonce)
+      fragment.source.traverse do |node|
+        next unless node.text? && node.content.match?(pattern)
+
+        node.content = node.content.gsub(pattern) { @config.renderer.resolve_value($1, assigns) }
+      end
     end
 
     # Accepts whatever a :html resolver returns (ActionText content, rich

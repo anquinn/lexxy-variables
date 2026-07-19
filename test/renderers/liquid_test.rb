@@ -1,43 +1,30 @@
 require "test_helper"
 require "liquid"
 
-class LiquidRendererTest < Minitest::Test
+class LiquidRendererTest < ActiveSupport::TestCase
   class CompanyDrop < Liquid::Drop
-    def name = "Acme &amp; Co"
+    def name = "Tom & Jerry"
   end
 
-  def setup
+  setup do
     @renderer = LexxyVariables::Renderers::Liquid.new
   end
 
-  def render(html, nonce: "abc123", assigns: {})
-    @renderer.render(html, nonce: nonce, assigns: assigns)
+  test "resolves a key from assigns" do
+    assert_equal "Acme", @renderer.resolve_value("company", { "company" => "Acme" })
   end
 
-  def test_resolves_a_matching_token
-    html = "Hello @@lexxy-var-abc123:company@@!"
-
-    assert_equal "Hello Acme!", render(html, assigns: { "company" => "Acme" })
+  test "resolves dotted keys through drops" do
+    assert_equal "Tom & Jerry", @renderer.resolve_value("company.name", { "company" => CompanyDrop.new })
   end
 
-  def test_resolves_dotted_keys_through_drops
-    html = "@@lexxy-var-abc123:company.name@@"
-
-    assert_equal "Acme &amp; Co", render(html, assigns: { "company" => CompanyDrop.new })
+  test "missing key becomes empty" do
+    assert_equal "", @renderer.resolve_value("company", {})
   end
 
-  def test_neutralizes_author_typed_liquid
-    html = "{{ 7 | plus: 1 }} and {% assign x = 1 %}"
-    out = render(html)
-
-    # Author braces are entity-escaped before parsing, so nothing executes.
-    refute_includes out, "8"
-    assert_includes out, "&#123;&#123;"
-  end
-
-  def test_ignores_a_token_with_a_forged_nonce
-    html = "@@lexxy-var-WRONG:company@@"
-
-    assert_equal html, render(html, nonce: "abc123", assigns: { "company" => "Acme" })
+  test "values are returned raw" do
+    # Drops must not pre-escape: escaping happens per output format at
+    # serialization after the resolver injects the value as text
+    assert_equal "a < b", @renderer.resolve_value("x", { "x" => "a < b" })
   end
 end

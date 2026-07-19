@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.0.5
+
+- Add a chainable `with_variables` API. `@record.body.with_variables(context:,
+  **assigns)` returns a resolved `ActionText::Content`, so Action Text's own
+  conversions chain from it: `.to_s` (sanitized HTML), `.to_plain_text`, and
+  `.to_markdown` on Rails versions that ship it. Rendering in a view is now
+  `<%= @record.body.with_variables %>`.
+- **Breaking:** the `render_variable_content` helper is removed. Replace
+  `render_variable_content(@record.body, ...)` with
+  `@record.body.with_variables(...)`, which takes the same arguments.
+- **Breaking:** the `content_layout` option is removed. Output renders under
+  Action Text's standard layout. To change the wrapper, override
+  `app/views/layouts/action_text/contents/_content.html.erb` like any other
+  rich text.
+- **Breaking:** values are now injected as DOM text nodes and escaped per
+  output format, instead of being spliced into the rendered HTML string.
+  In practice:
+  - Liquid drops and values must no longer pre-escape. Delete the
+    `ERB::Util.html_escape` calls from your drops, or values double-escape.
+  - A Liquid value containing HTML now renders as literal text. Use a
+    `renders_as: :html` attachment type for rich content.
+  - Custom renderers implement `resolve_value(key, assigns)` instead of
+    `render(html, nonce:, assigns:)`.
+  - Author-typed `{{ }}` under the Liquid renderer now stays literal instead
+    of rendering as `&#123;` entities. Only chip keys are parsed as Liquid.
+
 ## 0.0.4 (2026-07-14)
 
 - Rename the view helper `render_lexxy_content` to `render_variable_content`.
