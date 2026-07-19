@@ -1,41 +1,26 @@
 require "test_helper"
 
-class SubstitutionRendererTest < Minitest::Test
-  def setup
+class SubstitutionRendererTest < ActiveSupport::TestCase
+  setup do
     @renderer = LexxyVariables::Renderers::Substitution.new
   end
 
-  def render(html, nonce: "abc123", assigns: {})
-    @renderer.render(html, nonce: nonce, assigns: assigns)
+  test "resolves a key from assigns" do
+    assert_equal "Acme", @renderer.resolve_value("company", { "company" => "Acme" })
   end
 
-  def test_substitutes_a_matching_token
-    html = "Hello @@lexxy-var-abc123:company@@!"
-
-    assert_equal "Hello Acme!", render(html, assigns: { "company" => "Acme" })
+  test "missing key becomes empty" do
+    assert_equal "", @renderer.resolve_value("company", {})
   end
 
-  def test_escapes_the_value_so_html_is_inert
-    html = "@@lexxy-var-abc123:company@@"
+  test "returns the value raw" do
+    # Escaping happens per output format at serialization, not here.
+    value = "<b>Tom & Jerry</b>"
 
-    assert_equal "&lt;script&gt;x&lt;/script&gt;",
-      render(html, assigns: { "company" => "<script>x</script>" })
+    assert_equal value, @renderer.resolve_value("company", { "company" => value })
   end
 
-  def test_missing_key_becomes_empty
-    assert_equal "", render("@@lexxy-var-abc123:company@@", assigns: {})
-  end
-
-  def test_ignores_a_token_with_a_forged_nonce
-    html = "@@lexxy-var-WRONG:company@@"
-
-    # The author cannot fabricate a token: only this render's nonce is honored.
-    assert_equal html, render(html, nonce: "abc123", assigns: { "company" => "Acme" })
-  end
-
-  def test_no_template_engine_means_authored_braces_are_literal
-    html = "{{ evil }} and {% raw %}"
-
-    assert_equal html, render(html)
+  test "no template engine means the key is a plain lookup" do
+    assert_equal "", @renderer.resolve_value("7 | plus: 1", { "company" => "Acme" })
   end
 end

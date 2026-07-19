@@ -9,9 +9,9 @@ an `<action-text-attachment>` chip with its own content type, not as literal
 You decide what variables exist and what they turn into.
 
 Because variables are just Action Text attachments, you can register new
-chip types with `register_attachment` (see [Full configuration](#full-configuration)):
-a chip that renders as `:text` resolves to an escaped string, one that renders
-as `:html` splices rich content in before sanitization.
+chip types with `register_attachment` (see [Full configuration](#full-configuration)).
+A `:text` chip resolves to an escaped string. An `:html` chip splices rich
+content in before sanitization.
 
 Liquid is **optional**. The default renderer is plain, injection-safe string
 substitution and pulls in no template engine.
@@ -82,9 +82,6 @@ LexxyVariables.configure do |c|
 end
 ```
 
-The gem adds two view helpers, one for each side of the workflow: one to author
-content and one to display it.
-
 On the **editor page** (the form where content is composed), render the prompt
 *inside* the Lexxy editor. The editor extension looks for the `<lexxy-prompt>`
 within the `<lexxy-editor>` element, so it must be nested in the `rich_text_area`
@@ -107,10 +104,11 @@ for picking from the same list. Inserted variables appear as chips in the editor
 </p>
 
 On the **display page** (where the saved content is shown to readers), resolve
-the stored rich text. This is what swaps each variable chip for its value:
+the stored rich text with `with_variables`. This is what swaps each variable
+chip for its value:
 
 ```erb
-<%= render_variable_content(@record.body) %>
+<%= @record.body.with_variables %>
 ```
 
 Each chip resolves to its value, so the reader sees finished text:
@@ -152,16 +150,20 @@ Editor page:
 Display page:
 
 ```erb
-<%= render_variable_content(@message.body,
+<%= @message.body.with_variables(
       first_name: @user.first_name,
       last_name:  @user.last_name) %>
 ```
 
-The catalog entries have no `value` because it's supplied at render time, so the same saved content renders differently per user. The default renderer escapes the values automatically. When a variable name would collide with `context:` or `locale:`, use an `assigns:` hash instead (see [Helper options](#helper-options)).
+The catalog entries have no `value` because it's supplied at render time, so the same saved content renders differently per user. Values are escaped for HTML automatically. When a variable name would collide with `context:` or `locale:`, use an `assigns:` hash instead:
+
+```erb
+<%= @message.body.with_variables(assigns: { locale: @user.locale }) %>
+```
 
 ### Static values from config
 
-When a value is the same for everyone, it can live on the catalog item itself. With no `assigns` set, the gem reads `value` off the catalog and the helper takes no extra arguments:
+When a value is the same for everyone, it can live on the catalog item itself. With no `assigns` set, the gem reads `value` off the catalog and `with_variables` takes no arguments:
 
 ```ruby
 LexxyVariables.configure do |c|
@@ -170,27 +172,25 @@ end
 ```
 
 ```erb
-<%= render_variable_content(@message.body) %>
+<%= @message.body.with_variables %>
 ```
 
 ### Liquid drops and dotted access
 
-Liquid enables dotted access like `{{ user.first_name }}`, filters, and drops that expose a whole object. A drop is a small class that defines which methods Liquid can call, and escapes what it returns:
+Liquid enables dotted access like `{{ user.first_name }}`, filters, and drops that expose a whole object. A drop is a small class that defines which methods Liquid can call:
 
 ```ruby
 # app/drops/user_drop.rb
-# Liquid output is emitted html_safe after sanitization,
-# so a drop must escape its own values.
 class UserDrop < Liquid::Drop
   def initialize(user) = @user = user
 
-  def first_name = ERB::Util.html_escape(@user.first_name).to_s
-  def full_name  = ERB::Util.html_escape(@user.full_name).to_s
-  def email      = ERB::Util.html_escape(@user.email).to_s
+  def first_name = @user.first_name
+  def full_name  = @user.full_name
+  def email      = @user.email
 end
 ```
 
-The dotted keys go in the catalog so they can be inserted, the Liquid renderer is switched on, and `assigns` returns the drop under the name the keys use (`user`):
+The dotted keys go in the catalog, the Liquid renderer is used, and `assigns` returns the drop under the name the keys use (`user`):
 
 ```ruby
 LexxyVariables.configure do |c|
@@ -207,10 +207,54 @@ end
 ```
 
 ```erb
-<%= render_variable_content(@message.body) %>
+<%= @message.body.with_variables %>
 ```
 
-A `user.first_name` chip becomes `{{ user.first_name }}`, which Liquid runs through the drop. Only the methods defined on the drop are reachable, not arbitrary attributes on the user. Liquid doesn't escape output the way the default renderer does, so the drop escapes its own values. The same goes for any plain string returned from `assigns` or passed inline.
+A `user.first_name` chip becomes `{{ user.first_name }}`, which Liquid runs through the drop. Liquid can only call the methods the drop defines. Return raw values and let the gem handle the escaping.
+
+## Plain text and Markdown
+
+`with_variables` returns a plain `ActionText::Content` with every chip
+resolved, so Action Text's own conversions chain from it:
+
+```ruby
+@message.body.with_variables(first_name: @user.first_name).to_plain_text
+# => "Hi Ada, welcome aboard!"
+
+@message.body.with_variables(first_name: "Ada").to_markdown # Rails 8.2+
+```
+
+Each format handles its own escaping. Values come out raw in `to_plain_text`
+and `to_markdown`, and escaped in HTML. No view is required, so it works in
+mailers (the text part of an email), background jobs, and exports:
+
+```ruby
+mail.text_part = @message.body.with_variables(assigns).to_plain_text
+```
+
+Rendering works the same as on any rich text body. During a request Rails
+renders it with the current controller, so helpers and URLs resolve as usual.
+Outside a request it uses Rails' offline renderer.
+
+## Locales
+
+`with_variables` takes a `locale:`. Resolution runs inside `I18n.with_locale`,
+so anything that calls `I18n.t` along the way (assigns, resolvers, drops) sees
+that locale. Leave it off to use the current locale. The previous locale is
+restored afterward.
+
+```ruby
+@message.body.with_variables(locale: recipient.locale).to_plain_text
+```
+
+`with_variables` resolves right away, but the conversion you chain on it runs
+later under whatever locale is current then. If the content has attachments
+with translated partials, wrap the conversion too:
+
+```ruby
+resolved = @message.body.with_variables(locale: :fr)
+I18n.with_locale(:fr) { resolved.to_s }
+```
 
 ## Full configuration
 
@@ -218,7 +262,7 @@ A `user.first_name` chip becomes `{{ user.first_name }}`, which Liquid runs thro
 
 ```ruby
 LexxyVariables.configure do |c|
-  # What users can insert: the {{ prompt and the toolbar dropdown read this.
+  # What users can insert. The {{ prompt and the toolbar dropdown read this.
   c.catalog = ->(context) { context.variables + BuiltinVariable.all }
 
   # What each used key resolves to at render time.
@@ -227,7 +271,7 @@ LexxyVariables.configure do |c|
   # Opt into Liquid for dotted access, drops, and filters.
   c.renderer = LexxyVariables::Renderers::Liquid.new
 
-  # A second chip type: snippets expand to rich HTML instead of an escaped value.
+  # A second chip type. Snippets expand to rich HTML instead of an escaped value.
   c.register_attachment(
     content_type: "application/vnd.actiontext.snippet",
     renders_as: :html,
@@ -242,41 +286,20 @@ end
 | Option | Default | What it does |
 | --- | --- | --- |
 | `catalog` | `[]` | The insertable items shown in the `{{` prompt and the toolbar dropdown. A list, a zero-arg lambda, or a `->(context)` lambda. Items respond to `#key` and `#name`, and optionally `#value` and `#attachable_sgid`. |
-| `assigns` | reads `#value` off catalog items | The render-time lookup. A `->(context, used_keys)` or `->(used_keys)` lambda that receives only the keys used in the content being rendered and returns a `{ key => value }` hash. Per-render values can also be passed straight to `render_variable_content` (see [Helper options](#helper-options)). |
-| `renderer` | `Renderers::Substitution.new` | How placeholders become values. The default is plain, escaped string substitution with no template engine. Swap in `Renderers::Liquid.new` for dotted access, drops, and filters. |
+| `assigns` | reads `#value` off catalog items | The render-time lookup. A `->(context, used_keys)` or `->(used_keys)` lambda that receives only the keys used in the content being rendered and returns a `{ key => value }` hash. Per-render values can also be passed straight to `with_variables` (see [Examples](#examples)). |
+| `renderer` | `Renderers::Substitution.new` | How a chip's key becomes a value. The default is a plain hash lookup with no template engine. Swap in `Renderers::Liquid.new` for dotted access, drops, and filters. |
 | `sort` | `:name` | How the catalog is ordered in the prompt and dropdown. `:name` (case-insensitive alphabetical), `:key`, `false` to keep the catalog's given order, or a lambda (a `->(item)` sort key or a `->(a, b)` comparator). |
 | `max_fragment_depth` | `1` | How many levels of `renders_as: :html` chips expand. The default resolves the variables inside a snippet but drops a snippet nested inside another snippet. Raise it to allow deeper nesting. |
-| `content_layout` | `"layouts/action_text/contents/content"` | The Action Text layout that wraps rendered output. Point it at your own partial to change the wrapper, for example when rendering into emails. |
-| `register_attachment(content_type:, resolve:, renders_as:, label:)` | variable type pre-registered | Adds or replaces a chip type. `renders_as:` is `:text` (default, the resolver returns a key whose escaped value is substituted in) or `:html` (splices rich HTML in pre-sanitize, resolving inner `:text` chips in the same pass, bounded by `max_fragment_depth`). `label:` is the badge shown in the prompt when the list mixes types. Re-registering a content type (including the built-in variable type) replaces it, which is how you'd swap in a custom variable resolver. |
+| `register_attachment(content_type:, resolve:, renders_as:, label:)` | variable type pre-registered | Adds or replaces a chip type. `renders_as:` is `:text` (default, the resolver returns a key whose value is substituted in as inert text) or `:html` (splices rich HTML in pre-sanitize, resolving inner `:text` chips in the same pass, bounded by `max_fragment_depth`). `label:` is the badge shown in the prompt when the list mixes types. Re-registering a content type (including the built-in variable type) replaces it, which is how you'd swap in a custom variable resolver. |
 
-### Helper options
+### Prompt options
 
-Both view helpers take `context:` (see [Multi-tenancy](#multi-tenancy)). Beyond
-that, `lexxy_variables_prompt` lets you change the trigger characters and the
-empty state, and `render_variable_content` can render under a specific locale by
-wrapping the whole pass in `I18n.with_locale`.
+`lexxy_variables_prompt` takes `context:` (see [Multi-tenancy](#multi-tenancy))
+and lets you change the trigger characters and the empty state:
 
 ```erb
 <%= lexxy_variables_prompt(trigger: "%%", empty_results: t(".no_variables")) %>
-
-<%= render_variable_content(@record.body, locale: recipient.locale) %>
 ```
-
-You can also pass a variable's value straight to `render_variable_content`, as
-keyword arguments or an `assigns:` hash. These win over whatever the configured
-`assigns` returns, and a value for a key that isn't used in the content is just
-ignored:
-
-```erb
-<%# keyword arguments %>
-<%= render_variable_content(@record.body, first_name: @user.first_name) %>
-
-<%# same thing, for a name that would clash with context: or locale: %>
-<%= render_variable_content(@record.body, assigns: { first_name: @user.first_name }) %>
-```
-
-The default renderer escapes these values for you. Liquid doesn't, so escape
-them yourself or pass a drop.
 
 ## Multi-tenancy
 
@@ -290,7 +313,7 @@ LexxyVariables.configure do |c|
 end
 ```
 
-Both view helpers take the same `context:`. Pass the tenant on the editor page:
+Pass the tenant on the editor page:
 
 ```erb
 <%= form.rich_text_area :body do %>
@@ -301,7 +324,7 @@ Both view helpers take the same `context:`. Pass the tenant on the editor page:
 and again on the display page:
 
 ```erb
-<%= render_variable_content(@record.body, context: ActsAsTenant.current_tenant) %>
+<%= @record.body.with_variables(context: ActsAsTenant.current_tenant) %>
 ```
 
 Or skip `context` entirely and rely on acts_as_tenant scoping queries to the
@@ -369,14 +392,16 @@ popup and the dropdown:
 
 ## Security model
 
-- Every render gets a fresh random nonce that guards the placeholder tokens, so an
-  author can't fake a substitution by typing the token pattern into the body.
-- Chips are swapped for those nonce tokens before the HTML is sanitized, and the
-  real values go in afterward. A `:text` chip resolves to HTML-escaped text that
-  can't do anything, while an `:html` chip is spliced in before sanitizing so the
-  sanitizer still scrubs it.
-- Only the Liquid renderer deals with template-engine braces (`{{ }}` and `{% %}`).
-  The default renderer runs no engine at all, so there's nothing there to inject into.
+- Every resolution gets a fresh random nonce that guards the placeholder tokens,
+  so an author can't fake a substitution by typing the token pattern into the body.
+- Resolved values are injected as DOM text nodes, never parsed as markup. HTML
+  output escapes them at serialization and still runs the sanitizer at render
+  time, so a value can't reintroduce markup. Plain-text and Markdown output read
+  them raw. An `:html` chip is spliced in before that render-time sanitization,
+  so the sanitizer still scrubs it.
+- Only the Liquid renderer runs a template engine, and it only ever parses chip
+  keys, never body text, so `{{ }}` or `{% %}` an author types stays literal. The
+  default renderer runs no engine at all, so there's nothing there to inject into.
 
 ## Contributing
 
