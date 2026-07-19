@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.5
+## 0.0.5 (2026-07-19)
 
 - Add a chainable `with_variables` API. `@record.body.with_variables(context:,
   **assigns)` returns a resolved `ActionText::Content`, so Action Text's own
