@@ -38,6 +38,19 @@
 - Fix the prompt width override widening every Lexxy prompt, mentions
   included. It now applies only to the variables prompt and stays inside the
   editor.
+- Fix chips disappearing when saved content is edited. Chips with no record
+  behind them, from a catalog of hashes or plain objects, showed as a missing
+  attachment (☒) in the editor, and saving again deleted them. They now come
+  back as chips, and read as their name in plain text. Content saved by
+  earlier versions gets its chips back with no migration.
+- Fix `LexxyVariables::Attachable`. Models that include it now save chips with
+  the variable content type and render them as chips with no partial of their
+  own. Before, Action Text's defaults won, so chips were saved as
+  `application/octet-stream`, never resolved, and rendering them raised a
+  missing partial error. Chips saved that way still carry the wrong type and
+  aren't recognized.
+- Fix a catalog of plain objects without `attachable_sgid` raising when the
+  prompt renders. The README already listed it as optional.
 
 ## 0.0.5 (2026-07-19)
 

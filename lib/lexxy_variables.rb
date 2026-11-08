@@ -12,6 +12,7 @@ require "lexxy_variables/configuration"
 require "lexxy_variables/resolver"
 require "lexxy_variables/with_variables"
 require "lexxy_variables/attachable"
+require "lexxy_variables/chip_attachment"
 require "lexxy_variables/helper"
 require "lexxy_variables/engine" if defined?(Rails::Engine)
 
@@ -92,7 +93,7 @@ module LexxyVariables
     def item_sgid(item)
       if item.is_a?(Hash)
         item[:attachable_sgid]
-      else
+      elsif item.respond_to?(:attachable_sgid)
         item.attachable_sgid
       end
     end
