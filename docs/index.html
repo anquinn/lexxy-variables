@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>lexxy-variables</title>
+  <meta name="description" content="Insert and safely resolve variables in Lexxy rich text.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231e1238'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='ui-monospace,Menlo,monospace' font-weight='800' font-size='26' letter-spacing='-3' fill='%23d9f99d'%3E%7B%7B%7D%7D%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;800&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@37signals/lexxy@1.0.4/dist/stylesheets/lexxy.css">
+  <link rel="stylesheet" href="lexxy_variables.css">
+  <link rel="stylesheet" href="site.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "@37signals/lexxy": "https://esm.sh/@37signals/lexxy@1.0.4",
+        "lexxy-variables": "./lexxy_variables.js"
+      }
+    }
+  </script>
+  <script type="module" src="demo.js"></script>
+</head>
+<body>
+  <header class="nav wrap">
+    <a class="logo" href="#top" aria-label="Lexxy {{variables}}">
+      <span class="logo__lexxy">Lexxy</span>
+      <span class="logo__variables"><span class="logo__brace">{{</span>variables<span class="logo__brace logo__brace--close">}}</span></span>
+    </a>
+    <nav class="nav__links">
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a class="pill pill--dark" href="https://github.com/anquinn/lexxy-variables">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="top" class="hero wrap">
+      <div class="lockup">
+        <h1 class="hero__title">Variables for<br>Lexxy rich text</h1>
+        <div class="hero__aside">
+          <p>Type <code>{{</code> in the editor or use the toolbar menu to insert a variable. Pick a person or edit the hash on the sticker, and the After side updates as you go.</p>
+          <div class="hero__actions">
+            <code class="pill pill--code">gem "lexxy-variables"</code>
+            <a class="pill pill--accent" href="https://github.com/anquinn/lexxy-variables">Docs on GitHub</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="lockup demo">
+        <div class="card">
+          <div class="card__head"><b>Before</b><span>live editor, click to type</span></div>
+          <div class="card__editor" data-demo-editor></div>
+        </div>
+
+        <svg class="demo__arrow" aria-hidden="true" width="40" height="28" viewBox="0 0 40 28"><path d="M4 14 L 34 14"/><path d="M24 4 L 35 14 L 24 24"/></svg>
+
+        <div class="demo__middle">
+          <div class="sticker">
+            <div class="sticker__tabs" role="group" aria-label="Render for">
+              <button type="button" data-person="0" aria-pressed="true">Ada</button>
+              <button type="button" data-person="1" aria-pressed="false">Grace</button>
+              <button type="button" data-person="2" aria-pressed="false">Linus</button>
+            </div>
+            <pre class="sticker__hash" data-demo-hash contenteditable="plaintext-only" spellcheck="false" aria-label="Values passed to with_variables, editable"></pre>
+          </div>
+          <p class="demo__hint">Pick a person, or click the sticker and edit the values.</p>
+        </div>
+
+        <svg class="demo__arrow" aria-hidden="true" width="40" height="28" viewBox="0 0 40 28"><path d="M4 14 L 34 14"/><path d="M24 4 L 35 14 L 24 24"/></svg>
+
+        <div class="card">
+          <div class="card__head"><b>After</b><span>escaped and sanitized HTML</span></div>
+          <div class="card__output" data-demo-output></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="band">
+      <div class="wrap">
+        <h2>What you get</h2>
+        <ul class="features">
+          <li><h3>A <code>{{</code> prompt and toolbar menu</h3><p>Type two braces or open the toolbar menu to pick from a catalog you define.</p></li>
+          <li><h3>Stored as attachments</h3><p>Each variable is an Action Text attachment with its own content type, not literal <code>{{ }}</code> markup.</p></li>
+          <li><h3>Safe by default</h3><p>Plain string substitution. Values are escaped and the body is never parsed as a template.</p></li>
+          <li><h3>Static or database backed</h3><p>List variables in config, or point the catalog at a model. Chips remember their record, so renaming a key doesn't break saved content.</p></li>
+          <li><h3>Optional Liquid</h3><p>Opt in for dotted keys, filters and drops like <code>user.first_name</code>.</p></li>
+          <li><h3>HTML, text and Markdown</h3><p><code>with_variables</code> returns Action Text content, so <code>to_plain_text</code> and <code>to_markdown</code> chain from it.</p></li>
+          <li><h3>Custom chip types</h3><p>Register more types, like snippets that expand to rich HTML before sanitizing.</p></li>
+          <li><h3>Tenants and locales</h3><p>Pass a <code>context:</code> and a <code>locale:</code> through each render.</p></li>
+          <li><h3>Follows your Lexxy theme</h3><p>The stylesheet is built on Lexxy's own CSS variables. Works with importmap or any bundler.</p></li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="install" class="wrap install">
+      <h2>Install</h2>
+      <ol class="steps">
+        <li>
+          <div class="steps__text"><h3>Add the gem and the extension</h3><p>Ruby 3.2+, Rails 8.0+ and Lexxy 1.0+. Install Lexxy per its docs. The engine pins the extension for importmap, so you register it and load its stylesheet. With a bundler, use <code>@import "lexxy-variables/styles"</code> instead.</p></div>
+          <div class="steps__code">
+<pre class="code"><span class="c"># Gemfile</span>
+gem <span class="s">"lexxy-variables"</span></pre>
+<pre class="code"><span class="c">&lt;%# app/views/layouts/application.html.erb %&gt;</span>
+&lt;%= stylesheet_link_tag <span class="s">"lexxy_variables"</span> %&gt;</pre>
+<pre class="code"><span class="c">// app/javascript/application.js</span>
+<span class="k">import</span> * <span class="k">as</span> Lexxy <span class="k">from</span> <span class="s">"lexxy"</span>
+<span class="k">import</span> VariableExtension <span class="k">from</span> <span class="s">"lexxy-variables"</span>
+
+Lexxy.configure({ global: { extensions: [ VariableExtension ] } })</pre>
+          </div>
+        </li>
+        <li>
+          <div class="steps__text"><h3>List your variables</h3><p>The catalog is what people pick from in the editor. Use a plain list, or back it with a model that has <code>key</code>, <code>name</code> and <code>value</code> columns. Then each chip resolves to its record's value and survives a key rename.</p></div>
+          <div class="steps__code">
+<pre class="code"><span class="c"># config/initializers/lexxy_variables.rb</span>
+LexxyVariables.configure <span class="k">do</span> |c|
+  c.catalog = [
+    { key: <span class="s">"first_name"</span>, name: <span class="s">"First name"</span> },
+    { key: <span class="s">"team"</span>,       name: <span class="s">"Team"</span> }
+  ]
+<span class="k">end</span></pre>
+<pre class="code"><span class="c"># Or from the database. Variable is your own model</span>
+<span class="c"># with key, name and value columns.</span>
+<span class="k">class</span> Variable &lt; ApplicationRecord
+  <span class="k">include</span> LexxyVariables::Attachable
+<span class="k">end</span>
+
+LexxyVariables.configure <span class="k">do</span> |c|
+  c.catalog = -&gt; { Variable.all } <span class="c"># every row shows up in the editor</span>
+<span class="k">end</span></pre>
+          </div>
+        </li>
+        <li>
+          <div class="steps__text"><h3>Add the prompt to the editor</h3><p>Render it inside <code>rich_text_area</code>. It feeds both the <code>{{</code> prompt and the toolbar menu.</p></div>
+          <div class="steps__code">
+<pre class="code">&lt;%= form.rich_text_area :body <span class="k">do</span> %&gt;
+  &lt;%= lexxy_variables_prompt %&gt;
+&lt;% <span class="k">end</span> %&gt;</pre>
+          </div>
+        </li>
+        <li>
+          <div class="steps__text"><h3>Pass a hash when you render</h3><p>Each chip resolves to its value. Values are escaped for HTML automatically.</p></div>
+          <div class="steps__code">
+<pre class="code">&lt;%= @record.body.with_variables(
+      first_name: @person.first_name,
+      team:       <span class="s">"Acme Co"</span>) %&gt;</pre>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="wrap">
+      <a class="docs" href="https://github.com/anquinn/lexxy-variables">
+        <span class="docs__title">Full docs on GitHub</span>
+        <span class="docs__text">Every option, Liquid drops, database variables, custom chip types and styling.</span>
+      </a>
+    </section>
+  </main>
+
+  <footer class="footer wrap">
+    <p>Made by <a href="https://github.com/anquinn">Andrew Quinn</a>. MIT licensed. Built for <a href="https://lexxy.dev">Lexxy</a>.</p>
+  </footer>
+</body>
+</html>
