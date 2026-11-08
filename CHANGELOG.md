@@ -51,6 +51,8 @@
   aren't recognized.
 - Fix a catalog of plain objects without `attachable_sgid` raising when the
   prompt renders. The README already listed it as optional.
+- Add a demo site with a live editor at
+  https://anquinn.github.io/lexxy-variables/.
 
 ## 0.0.5 (2026-07-19)
 
