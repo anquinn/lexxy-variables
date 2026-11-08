@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0
+
+- Require Lexxy 1.0+ (README, Gemfile constraint and the `@37signals/lexxy`
+  peer dependency). The variables toolbar menu now works from the keyboard:
+  opening it focuses the first variable, arrow keys move between variables,
+  Enter inserts, and Escape closes it and returns focus to the button.
+
 ## 0.0.5 (2026-07-19)
 
 - Add a chainable `with_variables` API. `@record.body.with_variables(context:,
