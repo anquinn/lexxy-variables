@@ -6,6 +6,38 @@
   peer dependency). The variables toolbar menu now works from the keyboard:
   opening it focuses the first variable, arrow keys move between variables,
   Enter inserts, and Escape closes it and returns focus to the button.
+- The stylesheet is now built on Lexxy's `--lexxy-*` variables, so chips, the
+  toolbar dropdown and the `{{` prompt follow your Lexxy theme, dark themes
+  included. Set any Lexxy variable on one of the gem's classes to change just
+  that piece. The README lists each class and the Lexxy variables it uses.
+- **Visual change:** chips default to Lexxy's selection color
+  (`--lexxy-color-selected`) instead of indigo. Set
+  `--lexxy-variable-background` and `--lexxy-variable-color` to keep the old
+  look (`#eef2ff` and `#3730a3`).
+- **Breaking:** these variables are removed. Set the Lexxy variable on the
+  class instead.
+  - `--lexxy-variable-radius`: `--lexxy-radius` on `.lexxy-variable`
+  - `--lexxy-variables-menu-background`: `--lexxy-color-canvas` on
+    `.lexxy-variables-menu`
+  - `--lexxy-variables-menu-item-hover-background`:
+    `--lexxy-color-ink-lightest` on `.lexxy-variables-menu__item`
+  - `--lexxy-variables-option-code-color`: `--lexxy-color-ink-light` on
+    `.lexxy-variables-option__code`
+  - `--lexxy-variables-option-type-background` and
+    `--lexxy-variables-option-type-color`: `--lexxy-color-ink-lightest` and
+    `--lexxy-color-text-subtle` on `.lexxy-variables-option__type`
+  - `--lexxy-variables-menu-min-width`: a `min-inline-size` rule on
+    `.lexxy-variables-menu`
+- Chip and option rules now have zero specificity, so a host rule for the
+  class always wins, wherever it loads.
+- Fix a selected chip hiding Lexxy's selection highlight. A selected chip now
+  keeps its own shape and takes Lexxy's selection colors, which
+  `--lexxy-variable-selected-background` and `--lexxy-variable-selected-color`
+  override.
+- Fix the toolbar dropdown opening past the editor's right edge.
+- Fix the prompt width override widening every Lexxy prompt, mentions
+  included. It now applies only to the variables prompt and stays inside the
+  editor.
 
 ## 0.0.5 (2026-07-19)
 

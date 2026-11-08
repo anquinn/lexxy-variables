@@ -1,115 +1,110 @@
 /*
- * Default styles for lexxy-variables. Import this for a working out-of-the-box
- * look. Override the CSS custom properties (or the classes) to match your app.
+ * Built on Lexxy's --lexxy-* variables, so it follows the host's Lexxy theme.
+ * The README's Styling section lists the classes and how to override them.
  *
- * Classes this gem emits:
- *   .lexxy-variable                 variable token chip (in the editor)
- *   .lexxy-variable--block          modifier for chips that expand to a block
- *   .lexxy-variables-menu           the toolbar "insert variable" dropdown panel
- *   .lexxy-variables-menu__item     a button within that dropdown
- *   .lexxy-variables-option         option content, cloned into the {{ prompt
- *   .lexxy-variables-option__header popup AND the toolbar dropdown
- *   .lexxy-variables-option__name
- *   .lexxy-variables-option__type
- *   .lexxy-variables-option__code
+ * Rules wrapped in :where() have zero specificity, so any host rule for the
+ * class wins. The rest use a single class because they have to beat Lexxy's
+ * own styles.
  */
 
-/* Variable token chip. In published pages chips are replaced by resolved values. */
-.lexxy-variable {
+:where(.lexxy-variable) {
+  background: var(--lexxy-variable-background, var(--lexxy-color-selected));
+  border-radius: var(--lexxy-radius);
+  color: var(--lexxy-variable-color, var(--lexxy-color-text));
   display: inline-block;
-  padding: 0 0.4em;
-  border-radius: var(--lexxy-variable-radius, 0.375rem);
-  background: var(--lexxy-variable-background, #eef2ff);
-  color: var(--lexxy-variable-color, #3730a3);
   font-size: 0.875em;
+  padding: 0 0.4em;
   white-space: nowrap;
 }
 
-/* For chips that stand in for a rich block (e.g. snippets). Dashed edge hints
-   at "placeholder for a larger block". */
-.lexxy-variable--block {
-  border: var(--lexxy-variable-block-border, 1px dashed #6366f1);
+/* Lexxy shows selection by coloring the attachment around the chip, whose
+   corners would show behind a rounder chip. Paint the selection on the chip
+   instead, so it keeps the chip's shape. */
+action-text-attachment[content-type].node--selected:has(> .lexxy-variable) {
+  --lexxy-attachment-bg-color: transparent;
 }
 
-/* Toolbar "insert variable" dropdown. Deliberately a labelled list, not Lexxy's
-   icon-grid toolbar-dropdown-list. */
+.node--selected > .lexxy-variable {
+  background: var(--lexxy-variable-selected-background, var(--lexxy-color-accent-dark));
+  color: var(--lexxy-variable-selected-color, var(--lexxy-color-ink-inverted));
+}
+
+:where(.lexxy-variable--block) {
+  border: var(--lexxy-variable-block-border, 1px dashed var(--lexxy-color-accent-medium));
+}
+
+/* Lexxy styles the panel itself. Extension buttons sit at the end of the
+   toolbar, so the panel opens toward the editor instead of past its edge. */
 .lexxy-variables-menu {
-  display: flex;
+  border-start-end-radius: 0;
   flex-direction: column;
-  align-items: stretch;
-  min-width: var(--lexxy-variables-menu-min-width, 14rem);
-  max-width: var(--lexxy-variables-menu-max-width, min(20rem, 85vw));
-  max-height: var(--lexxy-variables-menu-max-height, 20rem);
+  font-family: var(--lexxy-font-base);
+  inset-inline-end: 0;
+  max-block-size: var(--lexxy-variables-menu-max-height, 20rem);
+  max-inline-size: var(--lexxy-variables-menu-max-width, min(20rem, 85vw));
+  min-inline-size: 14rem;
   overflow-y: auto;
-  background: var(--lexxy-variables-menu-background, #fff);
 }
 
 .lexxy-variables-menu__item {
+  color: var(--lexxy-color-text);
   display: flex;
-  padding: 0.5rem 0.75rem;
-  border: 0;
-  border-radius: 0.5rem;
-  background: none;
   font: inherit;
-  text-align: left;
-  cursor: pointer;
+  padding: 1ch;
+  text-align: start;
 }
 
-.lexxy-variables-menu__item:hover {
-  background-color: var(--lexxy-variables-menu-item-hover-background, rgba(0, 0, 0, 0.06));
+/* Lexxy caps every prompt popup at 20ch, which wraps names and truncates keys.
+   Widen only the variables popup, and leave Lexxy's edge clipping alone. */
+.lexxy-prompt-menu:has(.lexxy-variables-option):not([data-clipped-at-right]) {
+  max-inline-size: min(
+    var(--lexxy-variables-prompt-max-width, 24rem),
+    calc(100% - var(--lexxy-prompt-offset-x, 0px))
+  );
 }
 
-/* Option content, cloned into both the {{ prompt popup (styled by Lexxy) and the
-   toolbar dropdown. Stacks the name over the code and ellipsizes long keys so a
-   narrow popup never wraps mid-token. */
-/* Lexxy caps its prompt popup at 20ch, which wraps names and truncates keys.
-   Raise the cap (Lexxy sets it via :where(), so this plain class wins). */
-.lexxy-prompt-menu {
-  max-inline-size: var(--lexxy-variables-prompt-max-width, min(24rem, 90vw));
-}
-
-.lexxy-variables-option {
+:where(.lexxy-variables-option) {
+  align-items: flex-start;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 0.125rem;
-  min-width: 0;
-  max-width: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
 }
 
-.lexxy-variables-option__header {
-  display: flex;
+:where(.lexxy-variables-option__header) {
   align-items: baseline;
-  justify-content: space-between;
+  display: flex;
   gap: 0.5rem;
-  width: 100%;
+  inline-size: 100%;
+  justify-content: space-between;
 }
 
-.lexxy-variables-option__name {
-  min-width: 0;
-  font-size: 0.875rem;
+:where(.lexxy-variables-option__name) {
+  font-size: var(--lexxy-text-small);
+  min-inline-size: 0;
 }
 
-/* Type badge (e.g. "Snippet"), shown on the name row only when the list mixes
-   types. Sits to the right without adding a line. */
-.lexxy-variables-option__type {
-  flex-shrink: 0;
-  padding: 0.0625rem 0.375rem;
+:where(.lexxy-variables-option__type) {
+  background: var(--lexxy-color-ink-lightest);
   border-radius: 9999px;
-  background: var(--lexxy-variables-option-type-background, rgba(0, 0, 0, 0.06));
-  color: var(--lexxy-variables-option-type-color, #6b7280);
+  color: var(--lexxy-color-text-subtle);
+  flex-shrink: 0;
   font-size: 0.6875rem;
   line-height: 1.4;
+  padding: 0.0625rem 0.375rem;
   white-space: nowrap;
 }
 
+/* A single class, since it has to beat Lexxy's inline code styles. */
 .lexxy-variables-option__code {
-  max-width: 100%;
-  padding: 0;
-  overflow: hidden;
   background: transparent;
+  color: var(--lexxy-color-ink-light);
+  font-family: var(--lexxy-font-mono);
   font-size: 0.75rem;
-  color: var(--lexxy-variables-option-code-color, #9ca3af);
-  white-space: nowrap;
+  max-inline-size: 100%;
+  overflow: hidden;
+  padding: 0;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }

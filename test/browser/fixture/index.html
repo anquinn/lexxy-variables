@@ -17,6 +17,28 @@
   </script>
   <link rel="stylesheet" href="/lexxy-css/lexxy.css">
   <link rel="stylesheet" href="/vendor/stylesheets/lexxy_variables.css">
+  <!-- A host theme that only redefines Lexxy's tokens. Open /?theme=dark to
+       check that the gem's styles follow it with no overrides of their own. -->
+  <style>
+    :root[data-theme="dark"] {
+      --lexxy-color-ink: oklch(96% 0 0);
+      --lexxy-color-ink-medium: oklch(80% 0 0);
+      --lexxy-color-ink-light: oklch(65% 0 0);
+      --lexxy-color-ink-lighter: oklch(40% 0 0);
+      --lexxy-color-ink-lightest: oklch(28% 0 0);
+      --lexxy-color-ink-inverted: oklch(20% 0 0);
+      --lexxy-color-accent-dark: oklch(75% 0.15 260);
+      --lexxy-color-accent-medium: oklch(60% 0.15 258);
+      --lexxy-color-accent-light: oklch(40% 0.08 254);
+      --lexxy-color-accent-lightest: oklch(32% 0.06 254);
+      color-scheme: dark;
+      background: oklch(15% 0 0);
+      color: var(--lexxy-color-text);
+    }
+  </style>
+  <script>
+    document.documentElement.dataset.theme = new URLSearchParams(location.search).get("theme") || "light"
+  </script>
   <script type="module">
     import VariableExtension from "lexxy-variables"
     import * as Lexxy from "@37signals/lexxy"
@@ -50,6 +72,12 @@
           </span>
         </template>
         <template type="editor" content-type="application/vnd.actiontext.variable"><span class="lexxy-variable" data-lexxy-key="first_name">First name</span></template>
+      </lexxy-prompt-item>
+    </lexxy-prompt>
+    <lexxy-prompt trigger="@" name="mention">
+      <lexxy-prompt-item search="Ada Lovelace" sgid="sgid-ada">
+        <template type="menu">Ada Lovelace</template>
+        <template type="editor" content-type="application/vnd.actiontext.mention">Ada Lovelace</template>
       </lexxy-prompt-item>
     </lexxy-prompt>
   </lexxy-editor>
