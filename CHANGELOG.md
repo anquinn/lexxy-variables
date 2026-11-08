@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0
+## 1.0.0 (2026-11-08)
 
 - Require Lexxy 1.0+ (README, Gemfile constraint and the `@37signals/lexxy`
   peer dependency). The variables toolbar menu now works from the keyboard:
