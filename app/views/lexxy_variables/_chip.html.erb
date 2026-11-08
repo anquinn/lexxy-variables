@@ -1,0 +1,5 @@
+<%# Action Text names this local after the attachable's model (variable,
+    snippet, ...), or after this partial when there is no model. %>
+<% attachable = local_assigns.except(:in_gallery).values.first.attachable %>
+<%= lexxy_variable_chip(attachable.name, key: attachable.key,
+      block: LexxyVariables.block_content_type?(attachable.attachable_content_type)) %>

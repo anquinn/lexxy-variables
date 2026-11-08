@@ -1,15 +1,5 @@
 require "test_helper"
-require "active_support/all"
-require "active_record"
-require "action_controller"
-require "action_view"
-require "action_text"
-
-# ActionText::Content includes helpers that live in the engine's app/ directory,
-# which is only on the load path inside a full Rails app. Load them by hand.
-actiontext_root = Gem.loaded_specs["actiontext"].full_gem_path
-require File.join(actiontext_root, "app/helpers/action_text/content_helper")
-require File.join(actiontext_root, "app/helpers/action_text/tag_helper")
+require "test_helpers/action_text"
 
 # Covers the chainable API: Content#with_variables (injected via the
 # :action_text_content load hook) returning a resolved Content that ActionText's

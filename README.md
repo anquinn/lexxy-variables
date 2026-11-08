@@ -121,7 +121,7 @@ attribute hold your content.
 
 ## Examples
 
-### Simple replacement from a model
+### Values supplied at render time
 
 First and last name variables, with the values supplied at render time. No Liquid needed. The `catalog` lists the two variables so they appear in the editor:
 
@@ -211,6 +211,30 @@ end
 
 A `user.first_name` chip becomes `{{ user.first_name }}`, which Liquid runs through the drop. Liquid can only call the methods the drop defines. Return raw values and let the gem handle the escaping.
 
+### Variables from the database
+
+Give a model `key`, `name` and `value` columns and include `LexxyVariables::Attachable`:
+
+```ruby
+class Variable < ApplicationRecord
+  include LexxyVariables::Attachable
+end
+```
+
+```ruby
+LexxyVariables.configure do |c|
+  c.catalog = -> { Variable.all }
+end
+```
+
+With no `assigns`, each chip resolves to its record's `value`:
+
+```erb
+<%= @message.body.with_variables %>
+```
+
+Each chip also points at its record. Renaming a variable's key doesn't break content that already uses it, and Action Text lists the records in `body.attachables`. Without the include, any object with `key` and `name` still works, but chips only remember the key.
+
 ## Plain text and Markdown
 
 `with_variables` returns a plain `ActionText::Content` with every chip
@@ -280,11 +304,21 @@ LexxyVariables.configure do |c|
 end
 ```
 
+If a model for a second type includes `LexxyVariables::Attachable`, override `attachable_content_type` so its chips save with that type:
+
+```ruby
+class Snippet < ApplicationRecord
+  include LexxyVariables::Attachable
+
+  def attachable_content_type = "application/vnd.actiontext.snippet"
+end
+```
+
 ### All options
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `catalog` | `[]` | The insertable items shown in the `{{` prompt and the toolbar dropdown. A list, a zero-arg lambda, or a `->(context)` lambda. Items respond to `#key` and `#name`, and optionally `#value` and `#attachable_sgid`. |
+| `catalog` | `[]` | The insertable items shown in the `{{` prompt and the toolbar dropdown. A list, a zero-arg lambda, or a `->(context)` lambda. Items respond to `#key` and `#name`, and optionally `#value` and `#attachable_sgid` (see [Variables from the database](#variables-from-the-database)). |
 | `assigns` | reads `#value` off catalog items | The render-time lookup. A `->(context, used_keys)` or `->(used_keys)` lambda that receives only the keys used in the content being rendered and returns a `{ key => value }` hash. Per-render values can also be passed straight to `with_variables` (see [Examples](#examples)). |
 | `renderer` | `Renderers::Substitution.new` | How a chip's key becomes a value. The default is a plain hash lookup with no template engine. Swap in `Renderers::Liquid.new` for dotted access, drops, and filters. |
 | `sort` | `:name` | How the catalog is ordered in the prompt and dropdown. `:name` (case-insensitive alphabetical), `:key`, `false` to keep the catalog's given order, or a lambda (a `->(item)` sort key or a `->(a, b)` comparator). |
