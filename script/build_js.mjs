@@ -1,5 +1,6 @@
 // Copies the single JS + CSS sources to vendor/ so importmap / asset-pipeline
-// hosts get the same files the npm package ships. Run after editing src/.
+// hosts get the same files the npm package ships, and to docs/ so the GitHub
+// Pages demo runs the current code. Run after editing src/.
 import { copyFileSync, mkdirSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -8,7 +9,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
 const copies = [
   [ "src/lexxy/variable_extension.js", "vendor/javascript/lexxy_variables.js" ],
-  [ "src/styles/lexxy_variables.css", "vendor/stylesheets/lexxy_variables.css" ]
+  [ "src/styles/lexxy_variables.css", "vendor/stylesheets/lexxy_variables.css" ],
+  [ "src/lexxy/variable_extension.js", "docs/lexxy_variables.js" ],
+  [ "src/styles/lexxy_variables.css", "docs/lexxy_variables.css" ]
 ]
 
 for (const [ from, to ] of copies) {

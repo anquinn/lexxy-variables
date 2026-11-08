@@ -16,6 +16,8 @@ content in before sanitization.
 Liquid is **optional**. The default renderer is plain, injection-safe string
 substitution and pulls in no template engine.
 
+Try it on the [demo site](https://anquinn.github.io/lexxy-variables/).
+
 <p align="center">
   <img src="docs/images/prompt-popup.png" alt="The {{ prompt listing variables inside the Lexxy editor" width="606">
 </p>
@@ -509,8 +511,8 @@ npm run test:browser
 ```
 
 The editor extension in `src/` is compiled into `vendor/` (the copy importmap
-apps load). If you change anything under `src/`, rebuild before committing or CI
-will fail:
+apps load) and `docs/` (the demo site). If you change anything under `src/`,
+rebuild before committing or CI will fail:
 
 ```sh
 npm install
@@ -518,5 +520,5 @@ npm run build
 ```
 
 CI runs the tests across Ruby 3.2–4.0, rubocop, the browser suite, and a check
-that `vendor/` matches `src/`.
+that `vendor/` and `docs/` match `src/`.
 

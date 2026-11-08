@@ -51,8 +51,9 @@ jobs:
       - run: npx playwright install chromium
       - run: npm run test:browser
 
-  # The vendored JS and CSS must always match src/. Rebuild and fail if a
-  # commit edited src/ without running npm run build.
+  # The vendored JS and CSS, and the demo site's copies in docs/, must always
+  # match src/. Rebuild and fail if a commit edited src/ without running
+  # npm run build.
   vendored-assets:
     runs-on: ubuntu-latest
     steps:
@@ -61,4 +62,4 @@ jobs:
         with:
           node-version: "22"
       - run: npm run build
-      - run: git diff --exit-code vendor/
+      - run: git diff --exit-code vendor/ docs/
