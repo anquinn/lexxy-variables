@@ -57,3 +57,24 @@ test("the toolbar dropdown lists the catalog and inserts a chip", async ({ page 
 
   await expect(chip(page)).toHaveAttribute("data-lexxy-key", "first_name")
 })
+
+test("the toolbar dropdown works from the keyboard", async ({ page }) => {
+  const trigger = page.locator("button[name='variable']")
+  const items = page.locator(".lexxy-variables-menu__item")
+
+  await trigger.focus()
+  await page.keyboard.press("Enter")
+  await expect(items.first()).toBeFocused()
+
+  await page.keyboard.press("Escape")
+  await expect(items.first()).toBeHidden()
+  await expect(trigger).toBeFocused()
+
+  await page.keyboard.press("Enter")
+  await page.keyboard.press("ArrowDown")
+  await expect(items.filter({ hasText: "First name" })).toBeFocused()
+
+  await page.keyboard.press("Enter")
+
+  await expect(chip(page)).toHaveAttribute("data-lexxy-key", "first_name")
+})
