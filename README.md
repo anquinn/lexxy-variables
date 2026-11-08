@@ -338,8 +338,8 @@ end
 
 ## Styling
 
-The gem ships a default stylesheet so the editor UI works out of the box. Import
-it and override the CSS custom properties (or the classes) to match your app.
+The gem ships a stylesheet for the chips, the toolbar dropdown and the `{{`
+prompt. Import it once.
 
 ```css
 /* bundlers (esbuild, vite): */
@@ -352,33 +352,86 @@ it and override the CSS custom properties (or the classes) to match your app.
 <%= stylesheet_link_tag "lexxy_variables" %>
 ```
 
-Classes the gem emits: `.lexxy-variable` (token chip), `.lexxy-variable--block`
-(chips that expand to a block, e.g. snippets), `.lexxy-variables-menu` /
-`.lexxy-variables-menu__item` (the toolbar dropdown), and `.lexxy-variables-option`
-/ `__header` / `__name` / `__type` / `__code` (option content, shared by the
-`{{` prompt popup and the dropdown).
+It's built on Lexxy's own `--lexxy-*` variables, so it follows your Lexxy
+theme with no setup. If you've changed Lexxy's colors, fonts or radius, the
+variables UI already matches.
 
 <p align="center">
   <img src="docs/images/toolbar-dropdown.png" alt="The toolbar dropdown listing the variable catalog" width="640">
 </p>
 
-Override without touching the classes:
+### Classes
+
+| Class | Element | Lexxy variables it uses |
+| --- | --- | --- |
+| `.lexxy-variable` | Variable chip in the editor | `--lexxy-color-selected`, `--lexxy-color-text`, `--lexxy-radius`, and when selected `--lexxy-color-accent-dark`, `--lexxy-color-ink-inverted` |
+| `.lexxy-variable--block` | Chip that expands to a block, e.g. snippets | `--lexxy-color-accent-medium` |
+| `.lexxy-variables-menu` | Toolbar dropdown panel | `--lexxy-color-canvas`, `--lexxy-color-text`, `--lexxy-color-selected-hover`, `--lexxy-radius`, `--lexxy-shadow`, `--lexxy-font-base` |
+| `.lexxy-variables-menu__item` | A button in the dropdown | `--lexxy-color-text`, `--lexxy-color-ink-lightest`, `--lexxy-radius`, `--lexxy-focus-ring-color` |
+| `.lexxy-variables-option` | Option content, shared by the dropdown and the `{{` prompt | |
+| `.lexxy-variables-option__header` | Row holding the name and type badge | |
+| `.lexxy-variables-option__name` | Variable name | `--lexxy-text-small` |
+| `.lexxy-variables-option__type` | Type badge, shown when the list mixes types | `--lexxy-color-ink-lightest`, `--lexxy-color-text-subtle` |
+| `.lexxy-variables-option__code` | The `{{ key }}` line | `--lexxy-color-ink-light`, `--lexxy-font-mono` |
+| `.lexxy-prompt-menu:has(.lexxy-variables-option)` | The `{{` prompt popup | `--lexxy-color-canvas`, `--lexxy-color-ink`, `--lexxy-color-selected`, `--lexxy-shadow`, `--lexxy-font-base` |
+
+The prompt popup is Lexxy's element, shared with other prompts like mentions.
+The `:has()` selector targets only the variables one.
+
+### Changing one piece
+
+Set any Lexxy variable on one of the classes above. It changes that piece and
+leaves the rest of the editor alone.
+
+```css
+.lexxy-variables-menu {
+  --lexxy-color-canvas: #fafaf9;
+  --lexxy-radius: 0;
+}
+
+.lexxy-prompt-menu:has(.lexxy-variables-option) {
+  --lexxy-color-selected: #fef3c7;
+}
+```
+
+### Gem variables
+
+These cover what Lexxy has no variable for. Each defaults to the value shown.
+
+| Variable | Default |
+| --- | --- |
+| `--lexxy-variable-background` | `var(--lexxy-color-selected)` |
+| `--lexxy-variable-color` | `var(--lexxy-color-text)` |
+| `--lexxy-variable-selected-background` | `var(--lexxy-color-accent-dark)` |
+| `--lexxy-variable-selected-color` | `var(--lexxy-color-ink-inverted)` |
+| `--lexxy-variable-block-border` | `1px dashed var(--lexxy-color-accent-medium)` |
+| `--lexxy-variables-menu-max-width` | `min(20rem, 85vw)` |
+| `--lexxy-variables-menu-max-height` | `20rem` |
+| `--lexxy-variables-prompt-max-width` | `24rem` (Lexxy caps prompts at `20ch`) |
 
 ```css
 :root {
   --lexxy-variable-background: #fef3c7;
   --lexxy-variable-color: #92400e;
-  --lexxy-variable-block-border: 1px dashed #f59e0b;
-  --lexxy-variables-menu-item-hover-background: #f4f4f5;
-  --lexxy-variables-option-code-color: #a1a1aa;
-  --lexxy-variables-option-type-background: #f4f4f5;
-  --lexxy-variables-option-type-color: #71717a;
-  --lexxy-variables-prompt-max-width: 24rem; /* widen the {{ prompt popup (Lexxy caps at 20ch) */
+  --lexxy-variable-selected-background: #92400e;
+  --lexxy-variable-selected-color: #fef3c7;
 }
 ```
 
-Your prompt items should use the option classes so they appear the same in the
-popup and the dropdown:
+A selected chip keeps its own shape. Only its colors change, so a rule that
+restyles `.lexxy-variable` doesn't hide the selection.
+
+### Overriding with CSS
+
+For anything without a variable, write a rule for the class. Chip and option
+rules have zero specificity, so yours wins wherever it loads. The dropdown
+panel, its buttons and `__code` have to beat Lexxy's own styles. To override
+those, load your CSS after this stylesheet or add a parent selector.
+
+### Custom prompt items
+
+If you render your own prompt items, use the option classes so they look the
+same in the popup and the dropdown.
 
 ```erb
 <template type="menu">

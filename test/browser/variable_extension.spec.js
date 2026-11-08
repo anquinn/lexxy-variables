@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test"
+import { chip, editable } from "./helpers.js"
 
 // Drives the real editor through the same import-map setup an importmap-rails
 // host uses (see fixture/index.html): the lexxy gem's self-contained lexxy.js
@@ -6,9 +7,6 @@ import { test, expect } from "@playwright/test"
 test.beforeEach(async ({ page }) => {
   await page.goto("/")
 })
-
-const editable = (page) => page.locator("lexxy-editor [contenteditable='true']")
-const chip = (page) => page.locator("lexxy-editor action-text-attachment .lexxy-variable")
 
 test("typing the {{ trigger opens the prompt and inserting swaps it for a chip", async ({ page }) => {
   // Regression test for basecamp/lexxy#1179: Lexxy through 0.9.23 anchored the
